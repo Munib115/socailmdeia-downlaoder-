@@ -28,8 +28,7 @@ export default function HomePage() {
 
   // Warm up the Render backend on page load so it's ready when user clicks Fetch
   useEffect(() => {
-    const backend = (process.env.NEXT_PUBLIC_BACKEND_URL || 'https://socailmdeia-downlaoder.onrender.com').replace(/\/$/, '');
-    fetch(`${backend}/health`, { method: 'GET' }).catch(() => {});
+    fetch('https://socailmdeia-downlaoder.onrender.com/health', { method: 'GET' }).catch(() => {});
   }, []);
 
   // Auto-detect platform whenever URL changes

@@ -1,5 +1,8 @@
 import { VideoMetadata } from './ytdlp';
 
+// Hardcoded Render backend URL — no env vars needed
+const BACKEND_URL = 'https://socailmdeia-downlaoder.onrender.com';
+
 export interface DownloadError {
   type: 'INVALID_URL' | 'PRIVATE_VIDEO' | 'GEO_RESTRICTED' | 'UNSUPPORTED_PLATFORM' | 'SERVER_ERROR' | 'NETWORK_ERROR';
   message: string;
@@ -23,26 +26,27 @@ export function mapErrorMessage(rawErr: string | Error | any): DownloadError {
   return { type: 'SERVER_ERROR', message: 'Something went wrong on our end. Try again in a moment.' };
 }
 
-// Get the backend base URL — works in browser (NEXT_PUBLIC_) and on server (BACKEND_API_URL)
-function getBackendBase(): string {
-  // Client side: use the public env var baked in at build time
-  if (typeof window !== 'undefined') {
-    return (process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
   }
-  // Server side: use the secret env var
-  return (process.env.BACKEND_API_URL || '').replace(/\/$/, '');
 }
 
 export async function fetchVideoInfoClient(url: string): Promise<VideoMetadata> {
-  const backend = getBackendBase();
-  const endpoint = backend ? `${backend}/api/info` : '/api/info';
+  const endpoint = `${BACKEND_URL}/api/info`;
+  const options: RequestInit = {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  };
 
   const attemptFetch = async () => {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
-    });
+    // 50 second timeout — enough time for Render cold start
+    const res = await fetchWithTimeout(endpoint, options, 50000);
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.error || data.message || 'Failed to fetch video details');
@@ -53,8 +57,11 @@ export async function fetchVideoInfoClient(url: string): Promise<VideoMetadata> 
   try {
     return await attemptFetch();
   } catch (err: any) {
-    // Render free tier may be waking up — wait 5s and retry once
-    await new Promise(r => setTimeout(r, 5000));
+    if (err?.name === 'AbortError') {
+      throw new Error('SERVER_ERROR');
+    }
+    // Wait 3s and retry once
+    await new Promise(r => setTimeout(r, 3000));
     return await attemptFetch();
   }
 }
@@ -75,13 +82,5 @@ export function buildDownloadUrl(
     params.set('title', title);
   }
 
-  const backend = getBackendBase();
-
-  // Send download request directly to Render backend from the browser
-  // This bypasses Vercel's serverless timeout for large file downloads
-  if (backend) {
-    return `${backend}/api/download?${params.toString()}`;
-  }
-
-  return `/api/download?${params.toString()}`;
+  return `${BACKEND_URL}/api/download?${params.toString()}`;
 }
