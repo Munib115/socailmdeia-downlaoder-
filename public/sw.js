@@ -1,7 +1,8 @@
-const CACHE_NAME = 'snapget-v1';
+const CACHE_NAME = 'pakget-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',
+  '/favicon.svg',
   '/about',
   '/supported',
 ];
@@ -38,20 +39,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for static assets
+  // Handle requests
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        }
-        return networkResponse;
-      }).catch(() => {
-        return cachedResponse;
-      });
+      const fetchPromise = fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => cachedResponse);
 
       return cachedResponse || fetchPromise;
     })

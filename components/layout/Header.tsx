@@ -41,13 +41,13 @@ export function Header() {
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') {
           setDeferredPrompt(null);
+          return;
         }
       } catch (_) {}
-    } else {
-      // Clear dismissal so the bottom PWA card pops open with instructions
-      sessionStorage.removeItem('snapget_pwa_dismissed');
-      window.location.reload();
     }
+
+    // Trigger bottom banner guide
+    window.dispatchEvent(new CustomEvent('open-pwa-install'));
   };
 
   const navLinks = [

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Download, X, Smartphone, Monitor, ShieldCheck, Check } from 'lucide-react';
+import { Download, X, Smartphone, Monitor, ShieldCheck, Check, ArrowUpRight } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 export function PWAInstallBanner() {
@@ -34,9 +34,16 @@ export function PWAInstallBanner() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Always show the prompt smoothly after 1.5 seconds on first visit
+    // Listen for custom trigger from Header / anywhere
+    const handleOpenBanner = () => {
+      setIsVisible(true);
+      setShowInstructions(true);
+    };
+    window.addEventListener('open-pwa-install', handleOpenBanner);
+
+    // Show prompt smoothly after 1.5s
     const timer = setTimeout(() => {
-      const dismissed = sessionStorage.getItem('snapget_pwa_dismissed');
+      const dismissed = sessionStorage.getItem('pakget_pwa_dismissed');
       if (!dismissed) {
         setIsVisible(true);
       }
@@ -45,6 +52,7 @@ export function PWAInstallBanner() {
     return () => {
       clearTimeout(timer);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('open-pwa-install', handleOpenBanner);
     };
   }, []);
 
@@ -63,20 +71,20 @@ export function PWAInstallBanner() {
       }
     }
 
-    // If deferredPrompt is not available (e.g. iOS or manual browser install)
+    // Show step-by-step visual instruction guide
     setShowInstructions(true);
   };
 
   const handleDismiss = () => {
     setIsVisible(false);
-    sessionStorage.setItem('snapget_pwa_dismissed', 'true');
+    sessionStorage.setItem('pakget_pwa_dismissed', 'true');
   };
 
   if (!isVisible || isInstalled) return null;
 
   return (
     <aside
-      aria-label="Install SnapGet App Prompt"
+      aria-label="Install PakGet App Prompt"
       className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md z-50 animate-slide-up"
     >
       <div className="liquid-glass-elevated rounded-3xl p-5 shadow-2xl relative overflow-hidden border border-white/15">
@@ -113,7 +121,7 @@ export function PWAInstallBanner() {
           <div className="flex-1 min-w-0 pr-4">
             <div className="flex items-center gap-1.5">
               <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
-                {isIOS ? 'iOS Web App' : 'Progressive Web App'}
+                {isIOS ? 'iOS Web App' : 'Desktop & Mobile App'}
               </span>
               <span className="w-1 h-1 rounded-full bg-text-muted" />
               <span className="text-[11px] text-text-muted">Free & Fast</span>
@@ -122,7 +130,7 @@ export function PWAInstallBanner() {
               Install PakGet App
             </h2>
             <p className="text-xs text-text-secondary mt-1 leading-relaxed">
-              Install our standalone app for instant downloads, 4K HD media saving, and 1-tap pasting from your home screen.
+              Install our standalone desktop app for instant 1-click video saving right from your Windows / Mac desktop or taskbar.
             </p>
           </div>
         </div>
@@ -135,11 +143,11 @@ export function PWAInstallBanner() {
           </div>
           <div className="flex items-center gap-1 text-[11px] font-medium text-text-secondary bg-white/5 px-2.5 py-1 rounded-xl border border-white/5">
             {isIOS ? <Smartphone className="w-3.5 h-3.5 text-accent" /> : <Monitor className="w-3.5 h-3.5 text-accent" />}
-            <span>1-Tap Launch</span>
+            <span>Desktop Window</span>
           </div>
           <div className="flex items-center gap-1 text-[11px] font-medium text-text-secondary bg-white/5 px-2.5 py-1 rounded-xl border border-white/5">
             <Check className="w-3.5 h-3.5 text-accent" />
-            <span>Stateless</span>
+            <span>Fast & Clean</span>
           </div>
         </div>
 
@@ -153,7 +161,7 @@ export function PWAInstallBanner() {
               leftIcon={<Download className="w-4 h-4" />}
               className="flex-1 text-xs sm:text-sm font-bold shadow-lg"
             >
-              Install App Now
+              {deferredPrompt ? 'Install App Now' : 'How to Install to Desktop'}
             </Button>
             <button
               onClick={handleDismiss}
@@ -163,7 +171,7 @@ export function PWAInstallBanner() {
             </button>
           </div>
         ) : (
-          <div className="mt-4 p-3.5 rounded-2xl bg-black/50 border border-white/10 space-y-2.5 animate-fade-in text-xs text-text-secondary">
+          <div className="mt-4 p-3.5 rounded-2xl bg-black/60 border border-white/15 space-y-3 animate-fade-in text-xs text-text-secondary">
             {isIOS ? (
               <>
                 <div className="font-bold text-text-primary text-xs">How to add to iOS Home Screen:</div>
@@ -178,14 +186,23 @@ export function PWAInstallBanner() {
               </>
             ) : (
               <>
-                <div className="font-bold text-text-primary text-xs">How to install on Desktop / Mobile:</div>
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-accent/20 text-accent font-bold flex items-center justify-center text-[11px]">1</span>
-                  <span>Click the <strong className="text-text-primary">Install icon (⊕ or ⭳)</strong> in your browser&apos;s address bar</span>
+                <div className="font-bold text-text-primary text-xs flex items-center justify-between">
+                  <span>How to Install on Windows / Mac / Chrome:</span>
+                  <ArrowUpRight className="w-4 h-4 text-accent animate-bounce" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-accent/20 text-accent font-bold flex items-center justify-center text-[11px]">2</span>
-                  <span>Or open browser menu (⋮) → <strong className="text-text-primary">Install SnapGet</strong></span>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2.5 p-2 rounded-xl bg-white/5 border border-white/5">
+                    <span className="w-5 h-5 rounded-full bg-accent text-white font-bold flex items-center justify-center text-[11px] flex-shrink-0 mt-0.5">1</span>
+                    <div>
+                      Look at the <strong className="text-text-primary">top right of your address bar</strong> (next to the star/bookmark icon) and click the <strong className="text-accent">Install App icon (⊕ or 💻)</strong>.
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5 p-2 rounded-xl bg-white/5 border border-white/5">
+                    <span className="w-5 h-5 rounded-full bg-accent text-white font-bold flex items-center justify-center text-[11px] flex-shrink-0 mt-0.5">2</span>
+                    <div>
+                      Or open Chrome/Edge menu <strong className="text-text-primary">(⋮)</strong> → click <strong className="text-accent">"Install PakGet"</strong>.
+                    </div>
+                  </div>
                 </div>
               </>
             )}
@@ -193,9 +210,9 @@ export function PWAInstallBanner() {
               size="sm"
               variant="secondary"
               onClick={() => setShowInstructions(false)}
-              className="w-full mt-2 text-xs"
+              className="w-full mt-1 text-xs"
             >
-              Got it
+              Got it, thanks!
             </Button>
           </div>
         )}

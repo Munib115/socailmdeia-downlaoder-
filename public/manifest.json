@@ -1,28 +1,56 @@
 {
+  "id": "/",
   "name": "PakGet — Social Video Downloader",
   "short_name": "PakGet",
-  "description": "Download videos from YouTube, Instagram, TikTok, Facebook, and Twitter.",
+  "description": "Download videos from YouTube, Instagram, TikTok, Facebook, and Twitter instantly in HD.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#0A0A0A",
   "theme_color": "#2563EB",
-  "orientation": "portrait",
+  "prefer_related_applications": false,
+  "categories": ["utilities", "video", "productivity"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Open Downloader",
+      "short_name": "Downloader",
+      "description": "Download videos from any social media link",
+      "url": "/",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Supported Platforms",
+      "short_name": "Platforms",
+      "description": "View all supported social media platforms",
+      "url": "/supported",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
