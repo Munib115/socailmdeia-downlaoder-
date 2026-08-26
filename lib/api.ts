@@ -35,24 +35,28 @@ function getBackendBase(): string {
 
 export async function fetchVideoInfoClient(url: string): Promise<VideoMetadata> {
   const backend = getBackendBase();
-
-  // If backend URL is available, call Render directly from the browser
-  // This bypasses Vercel's 10s serverless timeout completely
   const endpoint = backend ? `${backend}/api/info` : '/api/info';
 
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url }),
-  });
+  const attemptFetch = async () => {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || data.message || 'Failed to fetch video details');
+    }
+    return data;
+  };
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error || data.message || 'Failed to fetch video details');
+  try {
+    return await attemptFetch();
+  } catch (err: any) {
+    // Render free tier may be waking up — wait 5s and retry once
+    await new Promise(r => setTimeout(r, 5000));
+    return await attemptFetch();
   }
-
-  return data;
 }
 
 export function buildDownloadUrl(
