@@ -31,17 +31,15 @@ export default function HomePage() {
     if (!url.trim()) {
       setDetectedPlatform(null);
       setErrorMessage(null);
-      if (state !== 'DOWNLOADING') {
-        setState('IDLE');
-        setVideoData(null);
-      }
+      setVideoData(null);
+      setState('IDLE');
       return;
     }
 
     const platform = detectPlatform(url);
     setDetectedPlatform(platform);
     setErrorMessage(null);
-  }, [url, state]);
+  }, [url]);
 
   // Handle URL fetch / submit
   const handleFetchVideo = async (targetUrl?: string) => {
@@ -182,13 +180,20 @@ export default function HomePage() {
           />
 
           {/* Quick Submit button on mobile / desktop */}
-          {url && state !== 'PREVIEWING' && state !== 'DOWNLOADING' && (
+          {url && state !== 'PREVIEWING' && (
             <button
               onClick={() => handleFetchVideo()}
-              disabled={state === 'DETECTING'}
-              className="w-full py-3.5 bg-accent hover:bg-accent-hover active:scale-95 text-white font-bold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+              disabled={state === 'DETECTING' || state === 'DOWNLOADING'}
+              className="w-full py-4 bg-accent hover:bg-accent-hover active:scale-[0.98] disabled:opacity-75 disabled:pointer-events-none text-white font-bold text-sm sm:text-base rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2"
             >
-              <span>Fetch Video</span>
+              {state === 'DETECTING' ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Fetching Video Details...</span>
+                </>
+              ) : (
+                <span>Fetch Video</span>
+              )}
             </button>
           )}
 
