@@ -105,3 +105,40 @@ export function detectPlatform(rawUrl: string): PlatformConfig | null {
 
   return null;
 }
+
+/**
+ * Cleans tracking params, mix playlist IDs, and clutter from URLs before feeding to yt-dlp.
+ */
+export function cleanMediaUrl(rawUrl: string): string {
+  if (!rawUrl) return '';
+  const trimmed = rawUrl.trim();
+
+  try {
+    const urlObj = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+    const host = urlObj.hostname.toLowerCase();
+
+    // YouTube handling: extract single video ID and drop playlist / radio / mix params
+    if (host.includes('youtube.com')) {
+      const v = urlObj.searchParams.get('v');
+      if (v) {
+        return `https://www.youtube.com/watch?v=${v}`;
+      }
+      if (urlObj.pathname.startsWith('/shorts/')) {
+        const shortId = urlObj.pathname.split('/shorts/')[1]?.split('/')[0]?.split('?')[0];
+        if (shortId) return `https://www.youtube.com/shorts/${shortId}`;
+      }
+    } else if (host === 'youtu.be') {
+      const id = urlObj.pathname.replace(/^\//, '').split('?')[0];
+      if (id) return `https://www.youtube.com/watch?v=${id}`;
+    }
+
+    // Instagram / TikTok / Twitter / Facebook: strip tracking params
+    ['igsh', 'utm_source', 'utm_medium', 'utm_campaign', 'si', 't', 's', '_r'].forEach((p) => {
+      urlObj.searchParams.delete(p);
+    });
+
+    return urlObj.toString();
+  } catch (_) {
+    return trimmed;
+  }
+}

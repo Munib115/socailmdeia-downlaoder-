@@ -26,6 +26,30 @@ def sanitize_filename(title: str) -> str:
     cleaned = re.sub(r'[\/\\:*?"<>|]', '', title).strip()
     return cleaned[:80] if cleaned else "media"
 
+def clean_url(raw_url: str) -> str:
+    if not raw_url:
+        return ""
+    try:
+        parsed = urllib.parse.urlparse(raw_url.strip())
+        qs = urllib.parse.parse_qs(parsed.query)
+        
+        # YouTube watch URL: keep only 'v' parameter, drop playlist/radio/mix params
+        if "youtube.com" in parsed.netloc and "v" in qs:
+            clean_query = urllib.parse.urlencode({"v": qs["v"][0]})
+            return urllib.parse.urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", clean_query, ""))
+        
+        # youtu.be short URL
+        if "youtu.be" in parsed.netloc:
+            path_id = parsed.path.lstrip("/").split("?")[0]
+            if path_id:
+                return f"https://www.youtube.com/watch?v={path_id}"
+                
+        # Strip tracking params from other platforms
+        cleaned_qs = {k: v for k, v in qs.items() if k not in ['igsh', 'utm_source', 'utm_medium', 'utm_campaign', 'si', 't', 's', '_r', 'list', 'start_radio']}
+        return urllib.parse.urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", urllib.parse.urlencode(cleaned_qs, doseq=True), ""))
+    except Exception:
+        return raw_url.strip()
+
 @app.get("/")
 def health_check():
     return {"status": "ok", "service": "PakGet yt-dlp microservice"}
@@ -36,9 +60,11 @@ def health():
 
 @app.post("/api/info")
 def get_video_info(req: VideoInfoRequest):
-    url = req.url.strip()
-    if not url:
+    raw_url = req.url.strip()
+    if not raw_url:
         raise HTTPException(status_code=400, detail="URL is required")
+
+    url = clean_url(raw_url)
 
     cmd = [
         "python", "-m", "yt_dlp",
@@ -50,13 +76,15 @@ def get_video_info(req: VideoInfoRequest):
         url
     ]
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=25)
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         if res.returncode != 0:
-            err = res.stderr
+            err = res.stderr or ""
             if "Private video" in err or "login" in err:
                 raise HTTPException(status_code=403, detail="PRIVATE_VIDEO")
-            if "Geo-restricted" in err or "not available" in err:
+            if "Geo-restricted" in err or "not available in your country" in err:
                 raise HTTPException(status_code=403, detail="GEO_RESTRICTED")
+            if "unavailable" in err or "Video unavailable" in err:
+                raise HTTPException(status_code=400, detail="This video is unavailable or has been deleted.")
             raise HTTPException(status_code=400, detail="INVALID_URL")
 
         data = json.loads(res.stdout)
@@ -82,6 +110,8 @@ def get_video_info(req: VideoInfoRequest):
             "url": url,
             "formats": formats
         }
+    except HTTPException:
+        raise
     except subprocess.TimeoutExpired:
         raise HTTPException(status_code=504, detail="Request timed out")
     except Exception as e:
@@ -91,6 +121,8 @@ def get_video_info(req: VideoInfoRequest):
 def download_stream(url: str, format: str = "best", audioOnly: bool = False, title: str = "video"):
     if not url:
         raise HTTPException(status_code=400, detail="URL is required")
+
+    clean_target_url = clean_url(url)
 
     args = [
         "python", "-m", "yt_dlp",
@@ -114,7 +146,7 @@ def download_stream(url: str, format: str = "best", audioOnly: bool = False, tit
         media_type = "video/mp4"
         ext = "mp4"
 
-    args.append(url)
+    args.append(clean_target_url)
 
     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
