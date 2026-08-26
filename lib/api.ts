@@ -1,7 +1,7 @@
 import { VideoMetadata } from './ytdlp';
 
-// Hardcoded Render backend URL — no env vars needed
-const BACKEND_URL = 'https://socailmdeia-downlaoder.onrender.com';
+// Production backend on Render
+const RENDER_BACKEND = 'https://socailmdeia-downlaoder.onrender.com';
 
 export interface DownloadError {
   type: 'INVALID_URL' | 'PRIVATE_VIDEO' | 'GEO_RESTRICTED' | 'UNSUPPORTED_PLATFORM' | 'SERVER_ERROR' | 'NETWORK_ERROR';
@@ -26,44 +26,34 @@ export function mapErrorMessage(rawErr: string | Error | any): DownloadError {
   return { type: 'SERVER_ERROR', message: 'Something went wrong on our end. Try again in a moment.' };
 }
 
-async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
+/**
+ * Returns true if running on localhost (dev mode)
+ */
+function isLocalDev(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 }
 
 export async function fetchVideoInfoClient(url: string): Promise<VideoMetadata> {
-  const endpoint = `${BACKEND_URL}/api/info`;
-  const options: RequestInit = {
+  // On localhost → use local /api/info (yt-dlp runs locally)
+  // On production → call Render directly from browser
+  const endpoint = isLocalDev()
+    ? '/api/info'
+    : `${RENDER_BACKEND}/api/info`;
+
+  const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url }),
-  };
+  });
 
-  const attemptFetch = async () => {
-    // 50 second timeout — enough time for Render cold start
-    const res = await fetchWithTimeout(endpoint, options, 50000);
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || data.message || 'Failed to fetch video details');
-    }
-    return data;
-  };
+  const data = await res.json();
 
-  try {
-    return await attemptFetch();
-  } catch (err: any) {
-    if (err?.name === 'AbortError') {
-      throw new Error('SERVER_ERROR');
-    }
-    // Wait 3s and retry once
-    await new Promise(r => setTimeout(r, 3000));
-    return await attemptFetch();
+  if (!res.ok) {
+    throw new Error(data.error || data.message || 'Failed to fetch video details');
   }
+
+  return data;
 }
 
 export function buildDownloadUrl(
@@ -82,5 +72,11 @@ export function buildDownloadUrl(
     params.set('title', title);
   }
 
-  return `${BACKEND_URL}/api/download?${params.toString()}`;
+  // On localhost → use local /api/download
+  // On production → send directly to Render
+  if (isLocalDev()) {
+    return `/api/download?${params.toString()}`;
+  }
+
+  return `${RENDER_BACKEND}/api/download?${params.toString()}`;
 }
