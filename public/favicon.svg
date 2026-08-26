@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#2563EB" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  
+  <!-- Outer Dark Background Rounded Rect -->
+  <rect width="64" height="64" rx="16" fill="#0A0A0A"/>
+  
+  <!-- Main Blue Liquid Glass Container -->
+  <rect x="6" y="6" width="52" height="52" rx="14" fill="url(#bgGrad)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" filter="url(#glow)"/>
+  
+  <!-- Top Specular Glass Sheen -->
+  <path d="M 6 20 C 6 12.268 12.268 6 20 6 L 44 6 C 51.732 6 58 12.268 58 20 L 58 28 C 34 32 30 18 6 28 Z" fill="url(#sheen)" />
+  
+  <!-- Crisp Download Arrow Icon -->
+  <path d="M32 18 V38 M23 30 L32 39 L41 30 M20 46 H44" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
