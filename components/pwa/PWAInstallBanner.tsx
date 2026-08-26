@@ -200,7 +200,7 @@ export function PWAInstallBanner() {
                   <div className="flex items-start gap-2.5 p-2 rounded-xl bg-white/5 border border-white/5">
                     <span className="w-5 h-5 rounded-full bg-accent text-white font-bold flex items-center justify-center text-[11px] flex-shrink-0 mt-0.5">2</span>
                     <div>
-                      Or open Chrome/Edge menu <strong className="text-text-primary">(⋮)</strong> → click <strong className="text-accent">"Install PakGet"</strong>.
+                      Or open Chrome/Edge menu <strong className="text-text-primary">(⋮)</strong> → click <strong className="text-accent">&quot;Install PakGet&quot;</strong>.
                     </div>
                   </div>
                 </div>
