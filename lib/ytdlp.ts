@@ -47,9 +47,9 @@ export async function fetchVideoInfo(url: string): Promise<VideoMetadata> {
     return res.json();
   }
 
-  // Local Python yt-dlp execution with Android/iOS/Web client bypass
+  // Local Python yt-dlp execution with adaptive extraction
   const safeUrl = url.replace(/"/g, '\\"');
-  const fullCommand = `python -m yt_dlp --extractor-args "youtube:player_client=android,web,ios" --no-check-certificates --dump-single-json --no-playlist --no-warnings "${safeUrl}"`;
+  const fullCommand = `python -m yt_dlp --no-check-certificates --dump-single-json --no-playlist --no-warnings "${safeUrl}"`;
 
   try {
     const { stdout } = await execAsync(fullCommand, {
@@ -144,8 +144,6 @@ export function spawnYtDlpStream(url: string, formatId: string = 'best', isAudio
   const args = [
     '-m',
     'yt_dlp',
-    '--extractor-args',
-    'youtube:player_client=android,web,ios',
     '--no-playlist',
     '--no-warnings',
     '--no-check-certificates',

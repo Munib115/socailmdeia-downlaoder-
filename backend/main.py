@@ -68,7 +68,6 @@ def get_video_info(req: VideoInfoRequest):
 
     cmd = [
         "python", "-m", "yt_dlp",
-        "--extractor-args", "youtube:player_client=android,web,ios",
         "--no-check-certificates",
         "--dump-single-json",
         "--no-playlist",
@@ -126,7 +125,6 @@ def download_stream(url: str, format: str = "best", audioOnly: bool = False, tit
 
     args = [
         "python", "-m", "yt_dlp",
-        "--extractor-args", "youtube:player_client=android,web,ios",
         "--no-check-certificates",
         "--no-playlist",
         "--no-warnings",
