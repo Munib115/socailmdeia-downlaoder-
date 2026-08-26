@@ -23,8 +23,24 @@ export function mapErrorMessage(rawErr: string | Error | any): DownloadError {
   return { type: 'SERVER_ERROR', message: 'Something went wrong on our end. Try again in a moment.' };
 }
 
+// Get the backend base URL — works in browser (NEXT_PUBLIC_) and on server (BACKEND_API_URL)
+function getBackendBase(): string {
+  // Client side: use the public env var baked in at build time
+  if (typeof window !== 'undefined') {
+    return (process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
+  }
+  // Server side: use the secret env var
+  return (process.env.BACKEND_API_URL || '').replace(/\/$/, '');
+}
+
 export async function fetchVideoInfoClient(url: string): Promise<VideoMetadata> {
-  const res = await fetch('/api/info', {
+  const backend = getBackendBase();
+
+  // If backend URL is available, call Render directly from the browser
+  // This bypasses Vercel's 10s serverless timeout completely
+  const endpoint = backend ? `${backend}/api/info` : '/api/info';
+
+  const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url }),
@@ -55,14 +71,13 @@ export function buildDownloadUrl(
     params.set('title', title);
   }
 
-  // If a remote Python backend is configured, send the download request
-  // DIRECTLY from the browser to Render — bypassing Vercel's 10s timeout entirely
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  if (backendUrl) {
-    const cleanBackend = backendUrl.replace(/\/$/, '');
-    return `${cleanBackend}/api/download?${params.toString()}`;
+  const backend = getBackendBase();
+
+  // Send download request directly to Render backend from the browser
+  // This bypasses Vercel's serverless timeout for large file downloads
+  if (backend) {
+    return `${backend}/api/download?${params.toString()}`;
   }
 
-  // Local dev fallback
   return `/api/download?${params.toString()}`;
 }
