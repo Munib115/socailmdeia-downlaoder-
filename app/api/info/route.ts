@@ -3,6 +3,7 @@ import { fetchVideoInfo } from '@/lib/ytdlp';
 import { detectPlatform } from '@/lib/platforms';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Extend to 60s for Vercel Pro, ignored on free
 
 export async function POST(req: Request) {
   try {
@@ -15,7 +16,20 @@ export async function POST(req: Request) {
 
     const trimmedUrl = url.trim();
 
-    // Check platform
+    // If a remote backend is configured, proxy to it
+    const backendUrl = process.env.BACKEND_API_URL;
+    if (backendUrl) {
+      const cleanBackend = backendUrl.replace(/\/$/, '');
+      const res = await fetch(`${cleanBackend}/api/info`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: trimmedUrl }),
+      });
+      const data = await res.json();
+      return NextResponse.json(data, { status: res.status });
+    }
+
+    // Local fallback (dev mode)
     const platform = detectPlatform(trimmedUrl);
     if (!platform) {
       return NextResponse.json(

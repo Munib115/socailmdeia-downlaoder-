@@ -9,33 +9,18 @@ export function mapErrorMessage(rawErr: string | Error | any): DownloadError {
   const text = typeof rawErr === 'string' ? rawErr : rawErr?.message || '';
 
   if (text.includes('INVALID_URL') || text.includes('valid URL') || text.includes('not a supported')) {
-    return {
-      type: 'INVALID_URL',
-      message: "This doesn't look like a supported video link.",
-    };
+    return { type: 'INVALID_URL', message: "This doesn't look like a supported video link." };
   }
   if (text.includes('PRIVATE_VIDEO') || text.includes('private') || text.includes('login')) {
-    return {
-      type: 'PRIVATE_VIDEO',
-      message: 'This video is private. Only public videos can be downloaded.',
-    };
+    return { type: 'PRIVATE_VIDEO', message: 'This video is private. Only public videos can be downloaded.' };
   }
   if (text.includes('GEO_RESTRICTED') || text.includes('region') || text.includes('country')) {
-    return {
-      type: 'GEO_RESTRICTED',
-      message: "This video isn't available in your region.",
-    };
+    return { type: 'GEO_RESTRICTED', message: "This video isn't available in your region." };
   }
   if (text.includes('UNSUPPORTED_PLATFORM') || text.includes('not supported')) {
-    return {
-      type: 'UNSUPPORTED_PLATFORM',
-      message: "We don't support this platform yet. Try YouTube, Instagram, TikTok, Facebook, or Twitter.",
-    };
+    return { type: 'UNSUPPORTED_PLATFORM', message: "We don't support this platform yet. Try YouTube, Instagram, TikTok, Facebook, or Twitter." };
   }
-  return {
-    type: 'SERVER_ERROR',
-    message: 'Something went wrong on our end. Try again in a moment.',
-  };
+  return { type: 'SERVER_ERROR', message: 'Something went wrong on our end. Try again in a moment.' };
 }
 
 export async function fetchVideoInfoClient(url: string): Promise<VideoMetadata> {
@@ -70,5 +55,14 @@ export function buildDownloadUrl(
     params.set('title', title);
   }
 
+  // If a remote Python backend is configured, send the download request
+  // DIRECTLY from the browser to Render — bypassing Vercel's 10s timeout entirely
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  if (backendUrl) {
+    const cleanBackend = backendUrl.replace(/\/$/, '');
+    return `${cleanBackend}/api/download?${params.toString()}`;
+  }
+
+  // Local dev fallback
   return `/api/download?${params.toString()}`;
 }
