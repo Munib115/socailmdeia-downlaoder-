@@ -2,12 +2,13 @@ import os
 import subprocess
 import json
 import urllib.parse
+import re
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-app = FastAPI(title="SnapGet yt-dlp Backend Microservice", version="1.0.0")
+app = FastAPI(title="PakGet yt-dlp Backend Microservice", version="2.0.0")
 
 # Allow Next.js frontend calls
 app.add_middleware(
@@ -21,9 +22,17 @@ app.add_middleware(
 class VideoInfoRequest(BaseModel):
     url: str
 
+def sanitize_filename(title: str) -> str:
+    cleaned = re.sub(r'[\/\\:*?"<>|]', '', title).strip()
+    return cleaned[:80] if cleaned else "media"
+
 @app.get("/")
 def health_check():
-    return {"status": "ok", "service": "SnapGet yt-dlp microservice"}
+    return {"status": "ok", "service": "PakGet yt-dlp microservice"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 @app.post("/api/info")
 def get_video_info(req: VideoInfoRequest):
@@ -31,24 +40,32 @@ def get_video_info(req: VideoInfoRequest):
     if not url:
         raise HTTPException(status_code=400, detail="URL is required")
 
-    cmd = ["yt-dlp", "--dump-single-json", "--no-playlist", "--no-warnings", url]
+    cmd = [
+        "python", "-m", "yt_dlp",
+        "--extractor-args", "youtube:player_client=android,web,ios",
+        "--no-check-certificates",
+        "--dump-single-json",
+        "--no-playlist",
+        "--no-warnings",
+        url
+    ]
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=25)
         if res.returncode != 0:
             err = res.stderr
             if "Private video" in err or "login" in err:
                 raise HTTPException(status_code=403, detail="PRIVATE_VIDEO")
-            if "Geo-restricted" in err:
+            if "Geo-restricted" in err or "not available" in err:
                 raise HTTPException(status_code=403, detail="GEO_RESTRICTED")
             raise HTTPException(status_code=400, detail="INVALID_URL")
 
         data = json.loads(res.stdout)
         
-        # Format formats
         formats = [
             {"id": "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best", "formatNote": "1080p Full HD", "ext": "mp4", "hasVideo": True, "hasAudio": True},
             {"id": "bestvideo[height<=720]+bestaudio/best[height<=720]/best", "formatNote": "720p HD", "ext": "mp4", "hasVideo": True, "hasAudio": True},
             {"id": "bestvideo[height<=480]+bestaudio/best[height<=480]/best", "formatNote": "480p SD", "ext": "mp4", "hasVideo": True, "hasAudio": True},
+            {"id": "bestvideo[height<=360]+bestaudio/best[height<=360]/best", "formatNote": "360p Low", "ext": "mp4", "hasVideo": True, "hasAudio": True},
             {"id": "bestaudio/best", "formatNote": "Audio Only (MP3)", "ext": "mp3", "hasVideo": False, "hasAudio": True}
         ]
 
@@ -71,11 +88,19 @@ def get_video_info(req: VideoInfoRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/download")
-def download_stream(url: str, format: str = "best", audioOnly: bool = False):
+def download_stream(url: str, format: str = "best", audioOnly: bool = False, title: str = "video"):
     if not url:
         raise HTTPException(status_code=400, detail="URL is required")
 
-    args = ["yt-dlp", "--no-playlist", "--no-warnings"]
+    args = [
+        "python", "-m", "yt_dlp",
+        "--extractor-args", "youtube:player_client=android,web,ios",
+        "--no-check-certificates",
+        "--no-playlist",
+        "--no-warnings",
+        "--buffer-size", "64K"
+    ]
+
     if audioOnly:
         args.extend(["-x", "--audio-format", "mp3", "-o", "-"])
         media_type = "audio/mpeg"
@@ -85,7 +110,7 @@ def download_stream(url: str, format: str = "best", audioOnly: bool = False):
         media_type = "video/mp4"
         ext = "mp4"
     else:
-        args.extend(["-f", "bestvideo+bestaudio/best", "-o", "-"])
+        args.extend(["-f", "best[ext=mp4]/bestvideo+bestaudio/best", "-o", "-"])
         media_type = "video/mp4"
         ext = "mp4"
 
@@ -100,7 +125,8 @@ def download_stream(url: str, format: str = "best", audioOnly: bool = False):
                 break
             yield chunk
 
-    filename = f"media.{ext}"
+    clean_title = sanitize_filename(title)
+    filename = f"{clean_title}.{ext}"
     encoded_filename = urllib.parse.quote(filename)
 
     return StreamingResponse(

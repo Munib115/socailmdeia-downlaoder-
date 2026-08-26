@@ -15,6 +15,18 @@ async function handleDownload(
     return NextResponse.json({ error: 'URL parameter is required' }, { status: 400 });
   }
 
+  const backendUrl = process.env.BACKEND_API_URL;
+  if (backendUrl) {
+    const cleanBackend = backendUrl.replace(/\/$/, '');
+    const params = new URLSearchParams({
+      url,
+      format: formatId,
+      audioOnly: isAudioOnly ? 'true' : 'false',
+    });
+    if (providedTitle) params.set('title', providedTitle);
+    return NextResponse.redirect(`${cleanBackend}/api/download?${params.toString()}`);
+  }
+
   const platform = detectPlatform(url);
   if (!platform) {
     return NextResponse.json(
