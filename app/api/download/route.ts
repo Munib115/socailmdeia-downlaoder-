@@ -15,8 +15,9 @@ async function handleDownload(
     return NextResponse.json({ error: 'URL parameter is required' }, { status: 400 });
   }
 
+  const isProduction = process.env.NODE_ENV === 'production';
   const backendUrl = process.env.BACKEND_API_URL;
-  if (backendUrl) {
+  if (isProduction && backendUrl) {
     const cleanBackend = backendUrl.replace(/\/$/, '');
     const params = new URLSearchParams({
       url,

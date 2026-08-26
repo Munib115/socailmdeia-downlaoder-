@@ -3,7 +3,6 @@ import { fetchVideoInfo } from '@/lib/ytdlp';
 import { detectPlatform } from '@/lib/platforms';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Extend to 60s for Vercel Pro, ignored on free
 
 export async function POST(req: Request) {
   try {
@@ -16,20 +15,7 @@ export async function POST(req: Request) {
 
     const trimmedUrl = url.trim();
 
-    // If a remote backend is configured, proxy to it
-    const backendUrl = process.env.BACKEND_API_URL;
-    if (backendUrl) {
-      const cleanBackend = backendUrl.replace(/\/$/, '');
-      const res = await fetch(`${cleanBackend}/api/info`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: trimmedUrl }),
-      });
-      const data = await res.json();
-      return NextResponse.json(data, { status: res.status });
-    }
-
-    // Local fallback (dev mode)
+    // Check platform
     const platform = detectPlatform(trimmedUrl);
     if (!platform) {
       return NextResponse.json(
@@ -38,6 +24,25 @@ export async function POST(req: Request) {
       );
     }
 
+    // If running in production on Vercel with BACKEND_API_URL defined, delegate to microservice
+    const isProduction = process.env.NODE_ENV === 'production';
+    const backendUrl = process.env.BACKEND_API_URL;
+    if (isProduction && backendUrl) {
+      try {
+        const cleanBackend = backendUrl.replace(/\/$/, '');
+        const res = await fetch(`${cleanBackend}/api/info`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: trimmedUrl }),
+        });
+        const data = await res.json();
+        return NextResponse.json(data, { status: res.status });
+      } catch (err) {
+        console.error('Remote backend proxy error, falling back:', err);
+      }
+    }
+
+    // Default & Local: use local yt-dlp extraction
     const metadata = await fetchVideoInfo(trimmedUrl);
     return NextResponse.json(metadata);
   } catch (error: any) {

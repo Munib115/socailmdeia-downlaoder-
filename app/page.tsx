@@ -26,11 +26,6 @@ export default function HomePage() {
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [progress, setProgress] = useState(0);
 
-  // Warm up the Render backend on page load so it's ready when user clicks Fetch
-  useEffect(() => {
-    fetch('https://socailmdeia-downlaoder.onrender.com/health', { method: 'GET' }).catch(() => {});
-  }, []);
-
   // Auto-detect platform whenever URL changes
   useEffect(() => {
     if (!url.trim()) {
