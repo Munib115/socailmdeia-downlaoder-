@@ -48,7 +48,7 @@ export async function fetchVideoInfoClient(url: string): Promise<VideoMetadata> 
   const data = await res.json();
 
   if (!res.ok) {
-    throw new Error(data.error || data.message || 'Failed to fetch video details');
+    throw new Error(data.detail || data.error || data.message || 'Failed to fetch video details');
   }
 
   return data;

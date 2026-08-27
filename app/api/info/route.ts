@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     // If running in production on Vercel with BACKEND_API_URL defined, delegate to microservice
     const isProduction = process.env.NODE_ENV === 'production';
     const backendUrl = process.env.BACKEND_API_URL;
-    if (isProduction && backendUrl) {
+    if (backendUrl) {
       try {
         const cleanBackend = backendUrl.replace(/\/$/, '');
         const res = await fetch(`${cleanBackend}/api/info`, {
@@ -39,8 +39,14 @@ export async function POST(req: Request) {
         });
         const data = await res.json();
         return NextResponse.json(data, { status: res.status });
-      } catch (err) {
-        console.error('Remote backend proxy error, falling back:', err);
+      } catch (err: any) {
+        console.error('Remote backend proxy error:', err);
+        if (isProduction) {
+          return NextResponse.json(
+            { error: 'BACKEND_ERROR', message: 'Backend service is starting up. Please try again in 15 seconds.' },
+            { status: 503 }
+          );
+        }
       }
     }
 
