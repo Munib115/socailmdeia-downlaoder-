@@ -77,60 +77,65 @@ def get_video_info(req: VideoInfoRequest):
 
     url = clean_url(raw_url)
 
-    cmd = [
-        sys.executable, "-m", "yt_dlp",
-        "--user-agent", USER_AGENT,
-        "--no-check-certificates",
-        "--dump-single-json",
-        "--no-playlist",
-        "--no-warnings",
-    ]
+    # Use native yt_dlp Python library directly for maximum reliability and speed
+    import yt_dlp
 
-    # Only apply YouTube client bypass for YouTube URLs so other platforms (TikTok/Instagram/Twitter) don't break
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'nocheckcertificate': True,
+        'noplaylist': True,
+        'extract_flat': False,
+        'http_headers': {
+            'User-Agent': USER_AGENT
+        }
+    }
+
     if "youtube.com" in url or "youtu.be" in url:
-        cmd.extend(["--extractor-args", "youtube:player_client=android,web"])
-
-    cmd.append(url)
+        ydl_opts['extractor_args'] = {
+            'youtube': {
+                'player_client': ['android', 'web', 'mweb']
+            }
+        }
 
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=35)
-        if res.returncode != 0:
-            err = res.stderr or ""
-            if "Private video" in err or "login" in err:
-                raise HTTPException(status_code=403, detail="PRIVATE_VIDEO")
-            if "Geo-restricted" in err or "not available in your country" in err:
-                raise HTTPException(status_code=403, detail="GEO_RESTRICTED")
-            if "unavailable" in err or "Video unavailable" in err:
-                raise HTTPException(status_code=400, detail="This video is unavailable or has been deleted.")
-            raise HTTPException(status_code=400, detail="INVALID_URL")
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            data = ydl.extract_info(url, download=False)
+            if not data:
+                raise HTTPException(status_code=400, detail="Could not extract video metadata")
 
-        data = json.loads(res.stdout)
-        
-        formats = [
-            {"id": "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best", "formatNote": "1080p Full HD", "ext": "mp4", "hasVideo": True, "hasAudio": True},
-            {"id": "bestvideo[height<=720]+bestaudio/best[height<=720]/best", "formatNote": "720p HD", "ext": "mp4", "hasVideo": True, "hasAudio": True},
-            {"id": "bestvideo[height<=480]+bestaudio/best[height<=480]/best", "formatNote": "480p SD", "ext": "mp4", "hasVideo": True, "hasAudio": True},
-            {"id": "bestvideo[height<=360]+bestaudio/best[height<=360]/best", "formatNote": "360p Low", "ext": "mp4", "hasVideo": True, "hasAudio": True},
-            {"id": "bestaudio/best", "formatNote": "Audio Only (MP3)", "ext": "mp3", "hasVideo": False, "hasAudio": True}
-        ]
+            formats = [
+                {"id": "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best", "formatNote": "1080p Full HD", "ext": "mp4", "hasVideo": True, "hasAudio": True},
+                {"id": "bestvideo[height<=720]+bestaudio/best[height<=720]/best", "formatNote": "720p HD", "ext": "mp4", "hasVideo": True, "hasAudio": True},
+                {"id": "bestvideo[height<=480]+bestaudio/best[height<=480]/best", "formatNote": "480p SD", "ext": "mp4", "hasVideo": True, "hasAudio": True},
+                {"id": "bestvideo[height<=360]+bestaudio/best[height<=360]/best", "formatNote": "360p Low", "ext": "mp4", "hasVideo": True, "hasAudio": True},
+                {"id": "bestaudio/best", "formatNote": "Audio Only (MP3)", "ext": "mp3", "hasVideo": False, "hasAudio": True}
+            ]
 
-        return {
-            "id": data.get("id", "video"),
-            "title": data.get("title", "Untitled Video"),
-            "thumbnail": data.get("thumbnail") or (data.get("thumbnails", [{}])[0].get("url", "")),
-            "duration": data.get("duration"),
-            "uploader": data.get("uploader") or data.get("channel", "Creator"),
-            "uploaderUrl": data.get("uploader_url"),
-            "viewCount": data.get("view_count"),
-            "description": data.get("description"),
-            "platform": data.get("extractor_key", "Social Media"),
-            "url": url,
-            "formats": formats
-        }
+            return {
+                "id": data.get("id", "video"),
+                "title": data.get("title", "Untitled Video"),
+                "thumbnail": data.get("thumbnail") or (data.get("thumbnails", [{}])[0].get("url", "")),
+                "duration": data.get("duration"),
+                "uploader": data.get("uploader") or data.get("channel", "Creator"),
+                "uploaderUrl": data.get("uploader_url"),
+                "viewCount": data.get("view_count"),
+                "description": data.get("description"),
+                "platform": data.get("extractor_key", "Social Media"),
+                "url": url,
+                "formats": formats
+            }
+    except yt_dlp.utils.DownloadError as e:
+        err = str(e)
+        if "Private video" in err or "login" in err:
+            raise HTTPException(status_code=403, detail="PRIVATE_VIDEO")
+        if "Geo-restricted" in err or "not available in your country" in err:
+            raise HTTPException(status_code=403, detail="GEO_RESTRICTED")
+        if "unavailable" in err or "Video unavailable" in err:
+            raise HTTPException(status_code=400, detail="This video is unavailable or has been deleted.")
+        raise HTTPException(status_code=400, detail=f"INVALID_URL: {err[:120]}")
     except HTTPException:
         raise
-    except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=504, detail="Request timed out")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
