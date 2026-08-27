@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchVideoInfo } from '@/lib/ytdlp';
+import { fetchFromRapidAPI } from '@/lib/rapidapi';
 import { detectPlatform, cleanMediaUrl } from '@/lib/platforms';
 
 export const dynamic = 'force-dynamic';
