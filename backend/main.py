@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import json
 import urllib.parse
@@ -8,7 +9,17 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-app = FastAPI(title="PakGet yt-dlp Backend Microservice", version="2.0.0")
+# Automatically enable static ffmpeg if installed
+try:
+    import static_ffmpeg
+    static_ffmpeg.add_paths()
+except Exception:
+    pass
+
+app = FastAPI(title="PakGet yt-dlp Backend Microservice", version="2.1.0")
+
+# Standard realistic browser User-Agent for Instagram, TikTok, Facebook, Twitter
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
 
 # Allow Next.js frontend calls
 app.add_middleware(
@@ -44,7 +55,7 @@ def clean_url(raw_url: str) -> str:
             if path_id:
                 return f"https://www.youtube.com/watch?v={path_id}"
                 
-        # Strip tracking params from other platforms
+        # Strip tracking params from Instagram, TikTok, Facebook, Twitter
         cleaned_qs = {k: v for k, v in qs.items() if k not in ['igsh', 'utm_source', 'utm_medium', 'utm_campaign', 'si', 't', 's', '_r', 'list', 'start_radio']}
         return urllib.parse.urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", urllib.parse.urlencode(cleaned_qs, doseq=True), ""))
     except Exception:
@@ -67,15 +78,22 @@ def get_video_info(req: VideoInfoRequest):
     url = clean_url(raw_url)
 
     cmd = [
-        "python", "-m", "yt_dlp",
+        sys.executable, "-m", "yt_dlp",
+        "--user-agent", USER_AGENT,
         "--no-check-certificates",
         "--dump-single-json",
         "--no-playlist",
         "--no-warnings",
-        url
     ]
+
+    # Only apply YouTube client bypass for YouTube URLs so other platforms (TikTok/Instagram/Twitter) don't break
+    if "youtube.com" in url or "youtu.be" in url:
+        cmd.extend(["--extractor-args", "youtube:player_client=android,web"])
+
+    cmd.append(url)
+
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=35)
         if res.returncode != 0:
             err = res.stderr or ""
             if "Private video" in err or "login" in err:
@@ -124,12 +142,17 @@ def download_stream(url: str, format: str = "best", audioOnly: bool = False, tit
     clean_target_url = clean_url(url)
 
     args = [
-        "python", "-m", "yt_dlp",
+        sys.executable, "-m", "yt_dlp",
+        "--user-agent", USER_AGENT,
         "--no-check-certificates",
         "--no-playlist",
         "--no-warnings",
         "--buffer-size", "64K"
     ]
+
+    # Only apply YouTube client bypass for YouTube URLs
+    if "youtube.com" in clean_target_url or "youtu.be" in clean_target_url:
+        args.extend(["--extractor-args", "youtube:player_client=android,web"])
 
     if audioOnly:
         args.extend(["-x", "--audio-format", "mp3", "-o", "-"])
@@ -172,3 +195,4 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
+

@@ -4,6 +4,8 @@ import { sanitizeFilename } from '@/lib/utils';
 import { detectPlatform } from '@/lib/platforms';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 
 async function handleDownload(
   url: string,

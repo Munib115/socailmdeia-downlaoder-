@@ -3,6 +3,8 @@ import { fetchVideoInfo } from '@/lib/ytdlp';
 import { detectPlatform, cleanMediaUrl } from '@/lib/platforms';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 
 export async function POST(req: Request) {
   try {
