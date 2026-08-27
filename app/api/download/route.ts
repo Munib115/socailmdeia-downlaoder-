@@ -18,7 +18,7 @@ async function handleDownload(
   }
 
   const isProduction = process.env.NODE_ENV === 'production';
-  const backendUrl = process.env.BACKEND_API_URL;
+  const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
   if (isProduction && backendUrl) {
     const cleanBackend = backendUrl.replace(/\/$/, '');
     const params = new URLSearchParams({

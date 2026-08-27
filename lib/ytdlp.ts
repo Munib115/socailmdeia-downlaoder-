@@ -31,7 +31,7 @@ export interface VideoMetadata {
  * Fetch video metadata via yt-dlp or remote backend microservice.
  */
 export async function fetchVideoInfo(url: string): Promise<VideoMetadata> {
-  const backendUrl = process.env.BACKEND_API_URL;
+  const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
 
   // Remote microservice option
   if (backendUrl) {

@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
     // If running in production on Vercel with BACKEND_API_URL defined, delegate to microservice
     const isProduction = process.env.NODE_ENV === 'production';
-    const backendUrl = process.env.BACKEND_API_URL;
+    const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
     if (backendUrl) {
       try {
         const cleanBackend = backendUrl.replace(/\/$/, '');
