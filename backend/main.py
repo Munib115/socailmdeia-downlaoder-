@@ -21,6 +21,25 @@ app = FastAPI(title="PakGet yt-dlp Backend Microservice", version="2.1.0")
 # Standard realistic browser User-Agent for Instagram, TikTok, Facebook, Twitter
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
 
+def get_cookies_path() -> str | None:
+    # 1. Check Render secret file path
+    if os.path.exists("/etc/secrets/cookies.txt"):
+        return "/etc/secrets/cookies.txt"
+    # 2. Check local cookies.txt
+    if os.path.exists("cookies.txt"):
+        return "cookies.txt"
+    # 3. Check environment variable YOUTUBE_COOKIES
+    raw_cookies = os.environ.get("YOUTUBE_COOKIES", "").strip()
+    if raw_cookies:
+        temp_path = "/tmp/cookies.txt" if os.name != "nt" else "temp_cookies.txt"
+        try:
+            with open(temp_path, "w", encoding="utf-8") as f:
+                f.write(raw_cookies)
+            return temp_path
+        except Exception:
+            pass
+    return None
+
 # Allow Next.js frontend calls
 app.add_middleware(
     CORSMiddleware,
@@ -91,6 +110,10 @@ def get_video_info(req: VideoInfoRequest):
         }
     }
 
+    cookies_path = get_cookies_path()
+    if cookies_path:
+        ydl_opts['cookiefile'] = cookies_path
+
     if "youtube.com" in url or "youtu.be" in url:
         ydl_opts['extractor_args'] = {
             'youtube': {
@@ -154,6 +177,10 @@ def download_stream(url: str, format: str = "best", audioOnly: bool = False, tit
         "--no-warnings",
         "--buffer-size", "64K"
     ]
+
+    cookies_path = get_cookies_path()
+    if cookies_path:
+        args.extend(["--cookies", cookies_path])
 
     # Only apply YouTube client bypass for YouTube URLs
     if "youtube.com" in clean_target_url or "youtu.be" in clean_target_url:
