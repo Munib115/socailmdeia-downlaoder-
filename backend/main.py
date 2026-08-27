@@ -94,7 +94,7 @@ def get_video_info(req: VideoInfoRequest):
     if "youtube.com" in url or "youtu.be" in url:
         ydl_opts['extractor_args'] = {
             'youtube': {
-                'player_client': ['android', 'web', 'mweb']
+                'player_client': ['android', 'ios', 'web_embedded', 'web']
             }
         }
 
@@ -157,7 +157,7 @@ def download_stream(url: str, format: str = "best", audioOnly: bool = False, tit
 
     # Only apply YouTube client bypass for YouTube URLs
     if "youtube.com" in clean_target_url or "youtu.be" in clean_target_url:
-        args.extend(["--extractor-args", "youtube:player_client=android,web"])
+        args.extend(["--extractor-args", "youtube:player_client=android,ios,web_embedded,web"])
 
     if audioOnly:
         args.extend(["-x", "--audio-format", "mp3", "-o", "-"])
