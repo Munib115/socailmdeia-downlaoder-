@@ -17,6 +17,11 @@ async function handleDownload(
     return NextResponse.json({ error: 'URL parameter is required' }, { status: 400 });
   }
 
+  // Direct CDN Stream from RapidAPI
+  if (formatId && (formatId.startsWith('http://') || formatId.startsWith('https://'))) {
+    return NextResponse.redirect(formatId);
+  }
+
   const isProduction = process.env.NODE_ENV === 'production';
   const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
   if (isProduction && backendUrl) {
