@@ -6,7 +6,6 @@ import { detectPlatform } from '@/lib/platforms';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-
 async function handleDownload(
   url: string,
   formatId: string = 'best',
@@ -15,11 +14,6 @@ async function handleDownload(
 ) {
   if (!url) {
     return NextResponse.json({ error: 'URL parameter is required' }, { status: 400 });
-  }
-
-  // Direct CDN Stream from RapidAPI
-  if (formatId && (formatId.startsWith('http://') || formatId.startsWith('https://'))) {
-    return NextResponse.redirect(formatId);
   }
 
   const isProduction = process.env.NODE_ENV === 'production';

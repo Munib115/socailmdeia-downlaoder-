@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
 import { fetchVideoInfo } from '@/lib/ytdlp';
-import { fetchFromRapidAPI } from '@/lib/rapidapi';
 import { detectPlatform, cleanMediaUrl } from '@/lib/platforms';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
-
 
 export async function POST(req: Request) {
   try {
@@ -27,17 +25,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1. Try RapidAPI cloud extractor first (Fastest, zero bot challenges)
-    try {
-      const rapidMeta = await fetchFromRapidAPI(cleanedUrl);
-      if (rapidMeta && rapidMeta.formats && rapidMeta.formats.length > 0) {
-        return NextResponse.json(rapidMeta);
-      }
-    } catch (rapidErr) {
-      console.log('RapidAPI extraction fallback:', rapidErr);
-    }
-
-    // 2. If running with BACKEND_API_URL defined, delegate to microservice
+    // If running in production on Vercel with BACKEND_API_URL defined, delegate to microservice
     const isProduction = process.env.NODE_ENV === 'production';
     const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
     if (backendUrl) {
@@ -52,10 +40,16 @@ export async function POST(req: Request) {
         return NextResponse.json(data, { status: res.status });
       } catch (err: any) {
         console.error('Remote backend proxy error:', err);
+        if (isProduction) {
+          return NextResponse.json(
+            { error: 'BACKEND_ERROR', message: 'Backend service is starting up. Please try again in 15 seconds.' },
+            { status: 503 }
+          );
+        }
       }
     }
 
-    // 3. Default & Local: use local yt-dlp extraction
+    // Default & Local: use local yt-dlp extraction
     const metadata = await fetchVideoInfo(cleanedUrl);
     return NextResponse.json(metadata);
   } catch (error: any) {
