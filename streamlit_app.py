@@ -1,68 +1,90 @@
 import os
 import re
+import shutil
 import tempfile
 import urllib.parse
 import streamlit as st
 
-# Automatically enable static ffmpeg if available
+# Automatically ensure ffmpeg is available
 try:
     import static_ffmpeg
     static_ffmpeg.add_paths()
 except Exception:
     pass
 
+# Verify ffmpeg presence
+FFMPEG_AVAILABLE = shutil.which("ffmpeg") is not None
+
 import yt_dlp
 
 # Page configuration
 st.set_page_config(
-    page_title="SnapGet — Social Media Video Downloader",
+    page_title="PakGet — Free Video Downloader",
     page_icon="⚡",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for rich, dark-mode aesthetic
+# Custom CSS matching the Next.js dark liquid glass aesthetic
 st.markdown("""
 <style>
-    /* Dark Theme Core */
+    @import url('https://api.fontshare.com/v2/css?f[]=satoshi@700,800,900&display=swap');
+
     .stApp {
         background-color: #0b0f19;
         color: #f1f5f9;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     
-    /* Header Container */
+    /* Header Section */
     .hero-container {
         text-align: center;
-        padding: 2.5rem 1rem 1.5rem;
+        padding: 2rem 0.5rem 1rem;
     }
-    .hero-badge {
-        display: inline-block;
-        background: rgba(59, 130, 246, 0.15);
-        color: #60a5fa;
-        font-size: 0.8rem;
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        padding: 0.35rem 0.85rem;
+    .hero-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(37, 99, 235, 0.12);
+        color: #93c5fd;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.4rem 1rem;
         border-radius: 9999px;
-        border: 1px solid rgba(96, 165, 250, 0.3);
-        margin-bottom: 1rem;
-        text-transform: uppercase;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        margin-bottom: 1.25rem;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    }
+    .pill-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #3b82f6;
+        display: inline-block;
+        box-shadow: 0 0 10px #3b82f6;
     }
     .hero-title {
-        font-size: 2.6rem;
-        font-weight: 800;
-        letter-spacing: -0.025em;
-        background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+        font-size: 2.5rem;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+        color: #ffffff;
+        margin-bottom: 0.75rem;
+    }
+    .hero-title-highlight {
+        display: inline-block;
+        background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #818cf8 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 0.5rem;
+        font-weight: 900;
+        text-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
     }
     .hero-subtitle {
         color: #94a3b8;
-        font-size: 1.05rem;
-        max-width: 500px;
-        margin: 0 auto 1.5rem auto;
+        font-size: 0.95rem;
+        max-width: 520px;
+        margin: 0 auto 1.5rem;
+        line-height: 1.5;
     }
 
     /* Platform Pills */
@@ -71,16 +93,19 @@ st.markdown("""
         justify-content: center;
         gap: 0.5rem;
         flex-wrap: wrap;
-        margin-bottom: 2rem;
+        margin-bottom: 1.75rem;
     }
     .platform-pill {
-        background: #1e293b;
-        color: #cbd5e1;
-        font-size: 0.8rem;
-        font-weight: 500;
-        padding: 0.3rem 0.75rem;
-        border-radius: 8px;
-        border: 1px solid #334155;
+        background: #151d2f;
+        color: #e2e8f0;
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 0.35rem 0.8rem;
+        border-radius: 10px;
+        border: 1px solid #1e293b;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
     }
 
     /* Video Card */
@@ -90,77 +115,78 @@ st.markdown("""
         border-radius: 16px;
         padding: 1.25rem;
         margin: 1.5rem 0;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.6);
     }
     .video-title {
-        font-size: 1.15rem;
+        font-size: 1.1rem;
         font-weight: 700;
         color: #f8fafc;
         margin-top: 0.75rem;
         margin-bottom: 0.5rem;
-        line-height: 1.4;
+        line-height: 1.35;
     }
     .meta-row {
         display: flex;
-        gap: 1rem;
+        gap: 0.85rem;
         color: #94a3b8;
         font-size: 0.85rem;
         flex-wrap: wrap;
     }
 
-    /* Streamlit Input & Button Overrides */
+    /* Streamlit Input & Button Styling */
     div[data-baseweb="input"] {
-        background-color: #1e293b !important;
-        border-color: #334155 !important;
-        border-radius: 12px !important;
+        background-color: #131b2e !important;
+        border: 1px solid #24324f !important;
+        border-radius: 14px !important;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2) !important;
     }
     div[data-baseweb="input"] input {
         color: #ffffff !important;
         font-size: 1rem !important;
+        padding: 0.65rem 0.85rem !important;
     }
     .stButton>button {
         background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
         color: white !important;
-        font-weight: 600 !important;
-        border-radius: 12px !important;
-        border: none !important;
-        padding: 0.65rem 1.5rem !important;
+        font-weight: 700 !important;
+        font-size: 0.95rem !important;
+        border-radius: 14px !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        padding: 0.7rem 1.5rem !important;
         width: 100% !important;
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4) !important;
         transition: all 0.2s ease !important;
-        box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39) !important;
     }
     .stButton>button:hover {
         transform: translateY(-1px) !important;
-        box-shadow: 0 6px 20px 0 rgba(37, 99, 235, 0.55) !important;
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.6) !important;
     }
     .stDownloadButton>button {
         background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
         color: white !important;
-        font-weight: 700 !important;
-        border-radius: 12px !important;
+        font-weight: 800 !important;
+        font-size: 1rem !important;
+        border-radius: 14px !important;
         border: none !important;
-        padding: 0.75rem 1.5rem !important;
+        padding: 0.8rem 1.5rem !important;
         width: 100% !important;
-        box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39) !important;
-    }
-    .stDownloadButton>button:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 6px 20px 0 rgba(16, 185, 129, 0.55) !important;
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
     }
     
-    /* Footer */
-    .footer-text {
-        text-align: center;
-        color: #64748b;
-        font-size: 0.8rem;
-        margin-top: 3rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid #1e293b;
+    /* FAQ Accordion Box */
+    .faq-card {
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-top: 1rem;
+        color: #94a3b8;
+        font-size: 0.88rem;
+        line-height: 1.5;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# User-Agent for realistic extraction
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
 
 def get_cookies_path():
@@ -229,15 +255,25 @@ def sanitize_filename(title: str) -> str:
 # Header UI
 st.markdown("""
 <div class="hero-container">
-    <div class="hero-badge">⚡ Pure yt-dlp Engine</div>
-    <div class="hero-title">SnapGet Media</div>
-    <div class="hero-subtitle">Fast, high-quality video & audio downloader with zero ads and no registration.</div>
+    <div class="hero-pill">
+        <span class="pill-dot"></span>
+        <span>PakGet Engine</span>
+        <span>•</span>
+        <span style="color:#60a5fa;">100% Stateless & Free</span>
+    </div>
+    <div class="hero-title">
+        Free video downloader in Pakistan.<br>
+        <span class="hero-title-highlight">Paste a link. Done.</span>
+    </div>
+    <div class="hero-subtitle">
+        Download supported public videos from YouTube, Instagram Reels, TikTok, Facebook, and X. Fast, free, and no account required.
+    </div>
     <div class="platforms-bar">
         <span class="platform-pill">🎬 YouTube</span>
         <span class="platform-pill">📸 Instagram</span>
         <span class="platform-pill">🎵 TikTok</span>
         <span class="platform-pill">📘 Facebook</span>
-        <span class="platform-pill">🐦 Twitter/X</span>
+        <span class="platform-pill">🐦 Twitter / X</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -245,13 +281,13 @@ st.markdown("""
 # URL Input
 url_input = st.text_input(
     label="Video URL",
-    placeholder="Paste video link here (e.g. https://www.youtube.com/watch?v=...)",
+    placeholder="Paste video link here (e.g., https://www.youtube.com/watch?v=...)",
     label_visibility="collapsed"
 )
 
 col1, col2 = st.columns([3, 1])
 with col1:
-    fetch_btn = st.button("🔍 Fetch Video Details", use_container_width=True)
+    fetch_btn = st.button("⚡ Fetch Video Details", use_container_width=True)
 with col2:
     if st.button("🧹 Clear", use_container_width=True):
         st.session_state.clear()
@@ -282,7 +318,7 @@ if fetch_btn and url_input.strip():
             'youtube': {'player_client': ['android', 'ios', 'web_embedded', 'web']}
         }
 
-    with st.spinner("Inspecting video metadata with yt-dlp..."):
+    with st.spinner("Analyzing media stream with yt-dlp..."):
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(target_url, download=False)
@@ -290,14 +326,14 @@ if fetch_btn and url_input.strip():
         except Exception as e:
             st.session_state.video_info = None
             err_msg = str(e)
-            if "Private video" in err_msg:
+            if "Private video" in err_msg or "login" in err_msg:
                 st.error("🔒 This video is private. Only public media can be downloaded.")
             elif "not available in your country" in err_msg or "Geo-restricted" in err_msg:
                 st.error("🌍 This video is geo-restricted.")
             else:
                 st.error(f"⚠️ Could not fetch video: {err_msg[:160]}")
 
-# Display Video Preview and Download Section
+# Display Video Preview and Download
 info = st.session_state.video_info
 if info:
     platform_name = detect_platform(st.session_state.target_url)
@@ -322,37 +358,33 @@ if info:
     st.markdown('</div>', unsafe_allow_html=True)
 
     # Format Quality Selection
-    st.subheader("Select Quality & Format")
+    st.subheader("Choose Download Quality")
     format_choice = st.selectbox(
-        "Format option:",
+        "Available formats:",
         [
-            "1080p Full HD (MP4)",
+            "Best Quality (Auto MP4)",
             "720p HD (MP4)",
             "480p SD (MP4)",
             "360p Low (MP4)",
             "Audio Only (MP3)"
         ],
-        index=1
+        index=0
     )
 
     is_audio = "Audio Only" in format_choice
-    format_id_map = {
-        "1080p Full HD (MP4)": "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
-        "720p HD (MP4)": "bestvideo[height<=720]+bestaudio/best[height<=720]/best",
-        "480p SD (MP4)": "bestvideo[height<=480]+bestaudio/best[height<=480]/best",
-        "360p Low (MP4)": "bestvideo[height<=360]+bestaudio/best[height<=360]/best",
-        "Audio Only (MP3)": "bestaudio/best"
-    }
-    selected_format = format_id_map[format_choice]
-
     clean_file_title = sanitize_filename(title)
     file_ext = "mp3" if is_audio else "mp4"
     output_filename = f"{clean_file_title}.{file_ext}"
 
-    if st.button(f"⚡ Prepare Download ({format_choice.split(' ')[0]})"):
-        with st.spinner("Processing with yt-dlp... please wait a few moments"):
+    if st.button(f"⬇️ Generate Download Link"):
+        with st.spinner("Processing media with yt-dlp... please wait a moment"):
             with tempfile.TemporaryDirectory() as temp_dir:
                 out_template = os.path.join(temp_dir, f"media.%(ext)s")
+                
+                # Resilient format specification
+                # If ffmpeg is available: we can merge bestvideo+bestaudio
+                # If ffmpeg is NOT installed: use pre-merged single streams (best[ext=mp4]/best) to avoid aborting
+                has_ffmpeg = shutil.which("ffmpeg") is not None
                 
                 dl_opts = {
                     'quiet': True,
@@ -367,28 +399,43 @@ if info:
                     dl_opts['cookiefile'] = cookies
 
                 if is_audio:
-                    dl_opts['format'] = 'bestaudio/best'
-                    dl_opts['postprocessors'] = [{
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': 'mp3',
-                        'preferredquality': '192',
-                    }]
+                    if has_ffmpeg:
+                        dl_opts['format'] = 'bestaudio/best'
+                        dl_opts['postprocessors'] = [{
+                            'key': 'FFmpegExtractAudio',
+                            'preferredcodec': 'mp3',
+                            'preferredquality': '192',
+                        }]
+                    else:
+                        dl_opts['format'] = 'bestaudio/best'
+                        output_filename = f"{clean_file_title}.m4a"
+                        file_ext = "m4a"
                 else:
-                    dl_opts['format'] = selected_format
-                    dl_opts['merge_output_format'] = 'mp4'
+                    if has_ffmpeg:
+                        if "Best Quality" in format_choice:
+                            dl_opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best'
+                        elif "720p" in format_choice:
+                            dl_opts['format'] = 'bestvideo[height<=720]+bestaudio/best[height<=720]/best'
+                        elif "480p" in format_choice:
+                            dl_opts['format'] = 'bestvideo[height<=480]+bestaudio/best[height<=480]/best'
+                        else:
+                            dl_opts['format'] = 'bestvideo[height<=360]+bestaudio/best[height<=360]/best'
+                        dl_opts['merge_output_format'] = 'mp4'
+                    else:
+                        # Fallback when ffmpeg is missing: single stream pre-muxed mp4
+                        dl_opts['format'] = 'best[ext=mp4]/best'
 
                 try:
                     with yt_dlp.YoutubeDL(dl_opts) as ydl:
                         ydl.download([st.session_state.target_url])
                     
-                    # Find created file in temp_dir
                     downloaded_files = [f for f in os.listdir(temp_dir) if not f.endswith('.part')]
                     if downloaded_files:
                         final_file_path = os.path.join(temp_dir, downloaded_files[0])
                         with open(final_file_path, "rb") as f:
                             media_bytes = f.read()
                         
-                        st.success("✅ Ready! Click below to save your file:")
+                        st.success("✅ Video ready! Click below to download:")
                         st.download_button(
                             label=f"💾 Save {output_filename}",
                             data=media_bytes,
@@ -397,13 +444,26 @@ if info:
                             use_container_width=True
                         )
                     else:
-                        st.error("No file was produced by yt-dlp.")
+                        st.error("No output file was created.")
                 except Exception as dl_err:
                     st.error(f"Download error: {str(dl_err)}")
 
+# FAQ
+with st.expander("❓ Frequently Asked Questions"):
+    st.markdown("""
+    **Is this downloader free?**  
+    Yes, 100% free with no limits, no registration, and no ads.
+    
+    **Why does it say ffmpeg is needed?**  
+    YouTube stores 1080p and 720p video and audio tracks separately. FFmpeg automatically merges them into a single MP4 file. We have added `packages.txt` with `ffmpeg` so Streamlit Cloud installs it automatically.
+    
+    **Can I download private videos?**  
+    No. Only public media can be downloaded according to platform policies.
+    """)
+
 # Footer
 st.markdown("""
-<div class="footer-text">
-    SnapGet Streamlit Edition • Powered by <b>yt-dlp</b> and <b>FFmpeg</b> • Free & Open Source
+<div style="text-align: center; color: #64748b; font-size: 0.8rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #1e293b;">
+    PakGet Streamlit Edition • Powered by <b>yt-dlp</b> & <b>FFmpeg</b> • 100% Free & Open Source
 </div>
 """, unsafe_allow_html=True)
