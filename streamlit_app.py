@@ -194,7 +194,14 @@ def get_cookies_path():
         return "cookies.txt"
     if os.path.exists("/etc/secrets/cookies.txt"):
         return "/etc/secrets/cookies.txt"
-    raw = os.environ.get("YOUTUBE_COOKIES", "").strip()
+    raw = ""
+    try:
+        if "YOUTUBE_COOKIES" in st.secrets:
+            raw = st.secrets["YOUTUBE_COOKIES"]
+    except Exception:
+        pass
+    if not raw:
+        raw = os.environ.get("YOUTUBE_COOKIES", "").strip()
     if raw:
         path = os.path.join(tempfile.gettempdir(), "cookies.txt")
         try:
@@ -315,7 +322,10 @@ if fetch_btn and url_input.strip():
 
     if "youtube.com" in target_url or "youtu.be" in target_url:
         ydl_opts['extractor_args'] = {
-            'youtube': {'player_client': ['android', 'ios', 'web_embedded', 'web']}
+            'youtube': {
+                'player_client': ['android', 'ios'],
+                'player_skip': ['webpage', 'configs']
+            }
         }
 
     with st.spinner("Analyzing media stream with yt-dlp..."):
@@ -378,57 +388,79 @@ if info:
 
     if st.button(f"⬇️ Generate Download Link"):
         with st.spinner("Processing media with yt-dlp... please wait a moment"):
-            with tempfile.TemporaryDirectory() as temp_dir:
-                out_template = os.path.join(temp_dir, f"media.%(ext)s")
-                
-                # Resilient format specification
-                # If ffmpeg is available: we can merge bestvideo+bestaudio
-                # If ffmpeg is NOT installed: use pre-merged single streams (best[ext=mp4]/best) to avoid aborting
-                has_ffmpeg = shutil.which("ffmpeg") is not None
-                
-                dl_opts = {
-                    'quiet': True,
-                    'no_warnings': True,
-                    'nocheckcertificate': True,
-                    'outtmpl': out_template,
-                    'http_headers': {'User-Agent': USER_AGENT}
-                }
-                
-                cookies = get_cookies_path()
-                if cookies:
-                    dl_opts['cookiefile'] = cookies
-
-                if is_audio:
-                    if has_ffmpeg:
-                        dl_opts['format'] = 'bestaudio/best'
-                        dl_opts['postprocessors'] = [{
-                            'key': 'FFmpegExtractAudio',
-                            'preferredcodec': 'mp3',
-                            'preferredquality': '192',
-                        }]
-                    else:
-                        dl_opts['format'] = 'bestaudio/best'
-                        output_filename = f"{clean_file_title}.m4a"
-                        file_ext = "m4a"
-                else:
-                    if has_ffmpeg:
-                        if "Best Quality" in format_choice:
-                            dl_opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best'
-                        elif "720p" in format_choice:
-                            dl_opts['format'] = 'bestvideo[height<=720]+bestaudio/best[height<=720]/best'
-                        elif "480p" in format_choice:
-                            dl_opts['format'] = 'bestvideo[height<=480]+bestaudio/best[height<=480]/best'
-                        else:
-                            dl_opts['format'] = 'bestvideo[height<=360]+bestaudio/best[height<=360]/best'
-                        dl_opts['merge_output_format'] = 'mp4'
-                    else:
-                        # Fallback when ffmpeg is missing: single stream pre-muxed mp4
-                        dl_opts['format'] = 'best[ext=mp4]/best'
-
-                try:
-                    with yt_dlp.YoutubeDL(dl_opts) as ydl:
-                        ydl.download([st.session_state.target_url])
+            try:
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    out_template = os.path.join(temp_dir, f"media.%(ext)s")
                     
+                    has_ffmpeg = shutil.which("ffmpeg") is not None
+                    
+                    dl_opts = {
+                        'quiet': True,
+                        'no_warnings': True,
+                        'nocheckcertificate': True,
+                        'outtmpl': out_template,
+                        'geo_bypass': True,
+                        'http_headers': {
+                            'User-Agent': USER_AGENT,
+                            'Accept': '*/*',
+                            'Accept-Language': 'en-US,en;q=0.9',
+                        }
+                    }
+                    
+                    if "youtube.com" in st.session_state.target_url or "youtu.be" in st.session_state.target_url:
+                        dl_opts['extractor_args'] = {
+                            'youtube': {
+                                'player_client': ['android', 'ios'],
+                                'player_skip': ['webpage', 'configs'],
+                            }
+                        }
+
+                    cookies = get_cookies_path()
+                    if cookies:
+                        dl_opts['cookiefile'] = cookies
+
+                    if is_audio:
+                        if has_ffmpeg:
+                            dl_opts['format'] = 'bestaudio/best'
+                            dl_opts['postprocessors'] = [{
+                                'key': 'FFmpegExtractAudio',
+                                'preferredcodec': 'mp3',
+                                'preferredquality': '192',
+                            }]
+                        else:
+                            dl_opts['format'] = 'bestaudio/best'
+                            output_filename = f"{clean_file_title}.m4a"
+                            file_ext = "m4a"
+                    else:
+                        if has_ffmpeg:
+                            if "Best Quality" in format_choice:
+                                dl_opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best'
+                            elif "720p" in format_choice:
+                                dl_opts['format'] = 'bestvideo[height<=720]+bestaudio/best[height<=720]/best'
+                            elif "480p" in format_choice:
+                                dl_opts['format'] = 'bestvideo[height<=480]+bestaudio/best[height<=480]/best'
+                            else:
+                                dl_opts['format'] = 'bestvideo[height<=360]+bestaudio/best[height<=360]/best'
+                            dl_opts['merge_output_format'] = 'mp4'
+                        else:
+                            dl_opts['format'] = 'best[ext=mp4]/best'
+
+                    try:
+                        with yt_dlp.YoutubeDL(dl_opts) as ydl:
+                            ydl.download([st.session_state.target_url])
+                    except Exception as dl_err:
+                        err_str = str(dl_err)
+                        if "403" in err_str or "Forbidden" in err_str:
+                            st.warning("🔄 Bypassing stream protection... retrying download...")
+                            dl_opts['extractor_args'] = {
+                                'youtube': {'player_client': ['ios', 'android']}
+                            }
+                            dl_opts['format'] = '18/22/best[ext=mp4]/best'
+                            with yt_dlp.YoutubeDL(dl_opts) as fallback_ydl:
+                                fallback_ydl.download([st.session_state.target_url])
+                        else:
+                            raise dl_err
+                        
                     downloaded_files = [f for f in os.listdir(temp_dir) if not f.endswith('.part')]
                     if downloaded_files:
                         final_file_path = os.path.join(temp_dir, downloaded_files[0])
@@ -445,8 +477,8 @@ if info:
                         )
                     else:
                         st.error("No output file was created.")
-                except Exception as dl_err:
-                    st.error(f"Download error: {str(dl_err)}")
+            except Exception as dl_err:
+                st.error(f"Download error: {str(dl_err)}")
 
 # FAQ
 with st.expander("❓ Frequently Asked Questions"):
