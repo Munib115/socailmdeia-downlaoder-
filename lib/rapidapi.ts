@@ -1,8 +1,12 @@
 import { VideoFormatOption, VideoMetadata } from './ytdlp';
 
 export async function fetchFromRapidAPI(url: string): Promise<VideoMetadata> {
-  const apiKey = process.env.RAPIDAPI_KEY || '671011f568msh81007126c2726cap10776fjsnb05cc17b5a93';
+  const apiKey = process.env.RAPIDAPI_KEY;
   const apiHost = process.env.RAPIDAPI_HOST || 'all-in-one-media-downloader-api.p.rapidapi.com';
+
+  if (!apiKey) {
+    throw new Error('RAPIDAPI_KEY is not configured');
+  }
 
   const res = await fetch(`https://${apiHost}/download?url=${encodeURIComponent(url)}`, {
     headers: {
