@@ -1,0 +1,7 @@
+streamlit>=1.38.0
+yt-dlp>=2024.8.6
+static-ffmpeg>=2.5
+requests>=2.31.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.9.0
