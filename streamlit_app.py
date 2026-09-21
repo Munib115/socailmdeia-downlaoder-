@@ -190,6 +190,14 @@ st.markdown("""
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
 
 def get_cookies_path():
+    if "custom_cookies" in st.session_state and st.session_state.custom_cookies:
+        path = os.path.join(tempfile.gettempdir(), "user_cookies.txt")
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(st.session_state.custom_cookies)
+            return path
+        except Exception:
+            pass
     if os.path.exists("cookies.txt"):
         return "cookies.txt"
     if os.path.exists("/etc/secrets/cookies.txt"):
@@ -294,9 +302,9 @@ url_input = st.text_input(
 
 col1, col2 = st.columns([3, 1])
 with col1:
-    fetch_btn = st.button("⚡ Fetch Video Details", use_container_width=True)
+    fetch_btn = st.button("⚡ Fetch Video Details", width="stretch")
 with col2:
-    if st.button("🧹 Clear", use_container_width=True):
+    if st.button("🧹 Clear", width="stretch"):
         st.session_state.clear()
         st.rerun()
 
@@ -313,7 +321,7 @@ if fetch_btn and url_input.strip():
         'nocheckcertificate': True,
         'noplaylist': True,
         'extract_flat': False,
-        'http_headers': {'User-Agent': USER_AGENT}
+        'geo_bypass': True,
     }
     
     cookies = get_cookies_path()
@@ -323,7 +331,7 @@ if fetch_btn and url_input.strip():
     if "youtube.com" in target_url or "youtu.be" in target_url:
         ydl_opts['extractor_args'] = {
             'youtube': {
-                'player_client': ['web_safari', 'visionos', 'mweb'],
+                'player_client': ['tv_embedded', 'visionos', 'android', 'web_safari'],
             }
         }
 
@@ -334,11 +342,11 @@ if fetch_btn and url_input.strip():
                 st.session_state.video_info = info
         except Exception as e:
             err_msg = str(e)
-            # Automatic fallback to visionos/tv if bot challenge encountered
+            # Automatic fallback to tv_embedded / visionos if bot challenge encountered
             if "bot" in err_msg.lower() or "sign in" in err_msg.lower():
                 try:
                     ydl_opts['extractor_args'] = {
-                        'youtube': {'player_client': ['visionos', 'tv']}
+                        'youtube': {'player_client': ['tv_embedded', 'visionos']}
                     }
                     with yt_dlp.YoutubeDL(ydl_opts) as retry_ydl:
                         info = retry_ydl.extract_info(target_url, download=False)
@@ -410,7 +418,7 @@ if info:
     file_ext = "mp3" if is_audio else "mp4"
     output_filename = f"{clean_file_title}.{file_ext}"
 
-    if st.button(f"⬇️ Generate Download Link"):
+    if st.button("⬇️ Generate Download Link", width="stretch"):
         with st.spinner("Processing media with yt-dlp... please wait a moment"):
             try:
                 with tempfile.TemporaryDirectory() as temp_dir:
@@ -424,17 +432,12 @@ if info:
                         'nocheckcertificate': True,
                         'outtmpl': out_template,
                         'geo_bypass': True,
-                        'http_headers': {
-                            'User-Agent': USER_AGENT,
-                            'Accept': '*/*',
-                            'Accept-Language': 'en-US,en;q=0.9',
-                        }
                     }
                     
                     if "youtube.com" in st.session_state.target_url or "youtu.be" in st.session_state.target_url:
                         dl_opts['extractor_args'] = {
                             'youtube': {
-                                'player_client': ['visionos', 'web_safari'],
+                                'player_client': ['tv_embedded', 'visionos', 'android'],
                             }
                         }
 
@@ -443,15 +446,14 @@ if info:
                         dl_opts['cookiefile'] = cookies
 
                     if is_audio:
+                        dl_opts['format'] = 'bestaudio/best'
                         if has_ffmpeg:
-                            dl_opts['format'] = 'bestaudio/best'
                             dl_opts['postprocessors'] = [{
                                 'key': 'FFmpegExtractAudio',
                                 'preferredcodec': 'mp3',
                                 'preferredquality': '192',
                             }]
                         else:
-                            dl_opts['format'] = 'bestaudio/best'
                             output_filename = f"{clean_file_title}.m4a"
                             file_ext = "m4a"
                     else:
@@ -459,28 +461,35 @@ if info:
                             if "Best Quality" in format_choice:
                                 dl_opts['format'] = 'bestvideo+bestaudio/best'
                             elif "720p" in format_choice:
-                                dl_opts['format'] = 'bestvideo[height<=720]+bestaudio/best[height<=720]/best'
+                                dl_opts['format'] = 'bestvideo[height<=720]+bestaudio/best[height<=720]/bestvideo+bestaudio/best'
                             elif "480p" in format_choice:
-                                dl_opts['format'] = 'bestvideo[height<=480]+bestaudio/best[height<=480]/best'
+                                dl_opts['format'] = 'bestvideo[height<=480]+bestaudio/best[height<=480]/bestvideo+bestaudio/best'
                             else:
-                                dl_opts['format'] = 'bestvideo[height<=360]+bestaudio/best[height<=360]/best'
+                                dl_opts['format'] = 'bestvideo[height<=360]+bestaudio/best[height<=360]/bestvideo+bestaudio/best'
                             dl_opts['merge_output_format'] = 'mp4'
                         else:
-                            dl_opts['format'] = 'best'
+                            dl_opts['format'] = 'best/bestvideo+bestaudio'
 
                     try:
                         with yt_dlp.YoutubeDL(dl_opts) as ydl:
                             ydl.download([st.session_state.target_url])
                     except Exception as dl_err:
-                        err_str = str(dl_err)
-                        # Automatic retry with visionos client and bestvideo+bestaudio
-                        dl_opts['extractor_args'] = {
-                            'youtube': {'player_client': ['visionos']}
-                        }
-                        dl_opts['format'] = 'bestvideo+bestaudio/best'
-                        dl_opts['merge_output_format'] = 'mp4'
-                        with yt_dlp.YoutubeDL(dl_opts) as fallback_ydl:
-                            fallback_ydl.download([st.session_state.target_url])
+                        # Fallback try with tv_embedded and android clients
+                        download_succeeded = False
+                        for fb_client in ['tv_embedded', 'android', 'visionos']:
+                            try:
+                                fb_opts = dict(dl_opts)
+                                fb_opts['extractor_args'] = {'youtube': {'player_client': [fb_client]}}
+                                fb_opts['format'] = 'bestvideo+bestaudio/best'
+                                fb_opts['merge_output_format'] = 'mp4'
+                                with yt_dlp.YoutubeDL(fb_opts) as fallback_ydl:
+                                    fallback_ydl.download([st.session_state.target_url])
+                                download_succeeded = True
+                                break
+                            except Exception:
+                                continue
+                        if not download_succeeded:
+                            raise dl_err
                         
                     downloaded_files = [f for f in os.listdir(temp_dir) if not f.endswith('.part')]
                     if downloaded_files:
@@ -494,7 +503,7 @@ if info:
                             data=media_bytes,
                             file_name=output_filename,
                             mime="audio/mpeg" if is_audio else "video/mp4",
-                            use_container_width=True
+                            width="stretch"
                         )
                     else:
                         st.error("No output file was created.")
@@ -517,7 +526,23 @@ with st.expander("❓ Frequently Asked Questions"):
 # Cookie authentication for permanent cloud bot bypass
 with st.expander("🍪 YouTube Cookie Authentication (Permanent Cloud Bot Bypass)"):
     st.markdown("""
-    YouTube occasionally challenges cloud hosting IP addresses (AWS, Streamlit Cloud). To guarantee 100% uninterrupted downloads:
+    YouTube occasionally challenges cloud hosting IP addresses (AWS, Streamlit Cloud). If you encounter 403 or bot challenges:
+    
+    **Option A: Upload or paste cookies here (Instant)**
+    """)
+    cookie_upload = st.file_uploader("Upload cookies.txt file", type=["txt"], key="cookie_uploader")
+    cookie_text = st.text_area("Or paste cookies.txt content here", height=100, key="cookie_text_area")
+    
+    if cookie_upload is not None:
+        st.session_state.custom_cookies = cookie_upload.getvalue().decode('utf-8', errors='ignore')
+        st.success("✅ Custom cookie file applied for this session!")
+    elif cookie_text.strip():
+        st.session_state.custom_cookies = cookie_text.strip()
+        st.success("✅ Custom cookies applied for this session!")
+        
+    st.markdown("""
+    ---
+    **Option B: Add to Streamlit Cloud Secrets (Permanent)**
     1. Install the free Chrome extension **Get cookies.txt locally**.
     2. Visit [youtube.com](https://youtube.com) and click **Export**.
     3. In your Streamlit Cloud dashboard &rarr; App **Settings** &rarr; **Secrets**, paste:
