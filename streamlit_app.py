@@ -331,7 +331,7 @@ if fetch_btn and url_input.strip():
     if "youtube.com" in target_url or "youtu.be" in target_url:
         ydl_opts['extractor_args'] = {
             'youtube': {
-                'player_client': ['tv_embedded', 'visionos', 'android', 'web_safari'],
+                'player_client': ['visionos', 'tv_embedded', 'android', 'web_safari'],
             }
         }
 
@@ -437,7 +437,7 @@ if info:
                     if "youtube.com" in st.session_state.target_url or "youtu.be" in st.session_state.target_url:
                         dl_opts['extractor_args'] = {
                             'youtube': {
-                                'player_client': ['tv_embedded', 'visionos', 'android'],
+                                'player_client': ['visionos', 'tv_embedded', 'android'],
                             }
                         }
 
@@ -474,9 +474,9 @@ if info:
                         with yt_dlp.YoutubeDL(dl_opts) as ydl:
                             ydl.download([st.session_state.target_url])
                     except Exception as dl_err:
-                        # Fallback try with tv_embedded and android clients
+                        # Fallback try with visionos, tv_embedded, and android clients
                         download_succeeded = False
-                        for fb_client in ['tv_embedded', 'android', 'visionos']:
+                        for fb_client in ['visionos', 'tv_embedded', 'android']:
                             try:
                                 fb_opts = dict(dl_opts)
                                 fb_opts['extractor_args'] = {'youtube': {'player_client': [fb_client]}}
@@ -508,7 +508,11 @@ if info:
                     else:
                         st.error("No output file was created.")
             except Exception as dl_err:
-                st.error(f"Download error: {str(dl_err)}")
+                err_text = str(dl_err)
+                if "403" in err_text or "forbidden" in err_text.lower():
+                    st.error("🚫 **YouTube Cloud Block (HTTP 403: Forbidden)**: YouTube detects that this request is coming from a cloud datacenter IP (Streamlit Cloud / AWS). To unlock downloads, simply upload or paste your `cookies.txt` in the **YouTube Cookie Authentication** section below.")
+                else:
+                    st.error(f"Download error: {err_text}")
 
 # FAQ
 with st.expander("❓ Frequently Asked Questions"):
