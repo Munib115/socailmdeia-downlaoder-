@@ -532,18 +532,9 @@ if info:
             except Exception as dl_err:
                 err_text = str(dl_err)
                 if "403" in err_text or "forbidden" in err_text.lower():
-                    st.session_state.show_cookie_box = True
-                    st.error("🚫 **YouTube Cloud Block (HTTP 403: Forbidden)**: YouTube detected a cloud server IP. Built-in cookies have been updated in this release. You can also paste or upload custom cookies right below:")
-                    err_c_upload = st.file_uploader("Upload cookies.txt", type=["txt"], key="inline_cookie_uploader")
-                    err_c_text = st.text_area("Or paste cookies.txt content here", height=70, key="inline_cookie_text")
-                    if err_c_upload is not None:
-                        st.session_state.custom_cookies = err_c_upload.getvalue().decode('utf-8', errors='ignore')
-                        st.success("✅ Cookies saved! Please click 'Generate Download Link' again.")
-                    elif err_c_text.strip():
-                        st.session_state.custom_cookies = err_c_text.strip()
-                        st.success("✅ Cookies saved! Please click 'Generate Download Link' again.")
+                    st.error("🚫 **YouTube Cloud Restriction (HTTP 403)**: YouTube restricts media stream downloads from public cloud hosting servers (AWS / Streamlit Cloud). Instagram, TikTok, Facebook, and Twitter work 100% on the cloud. For unrestricted YouTube downloads, run PakGet locally or deploy with residential proxy routing.")
                 else:
-                    st.error(f"Download error: {err_text}")
+                    st.error(f"⚠️ Download error: {err_text}")
 
 # FAQ
 with st.expander("❓ Frequently Asked Questions"):
@@ -551,45 +542,14 @@ with st.expander("❓ Frequently Asked Questions"):
     **Is this downloader free?**  
     Yes, 100% free with no limits, no registration, and no ads.
     
-    **Why does it say ffmpeg is needed?**  
-    YouTube stores 1080p and 720p video and audio tracks separately. FFmpeg automatically merges them into a single MP4 file.
+    **Which platforms are supported?**  
+    Instagram Reels & Posts, TikTok, Facebook Videos, Twitter / X, and YouTube.
+    
+    **Why does YouTube show 403 on cloud hosts?**  
+    YouTube detects and blocks automated media streaming from public cloud datacenter IP ranges (AWS, Google Cloud, Streamlit). Instagram, TikTok, Facebook, and X do not restrict cloud servers.
     
     **Can I download private videos?**  
     No. Only public media can be downloaded according to platform policies.
-    """)
-
-# Cookie authentication for permanent cloud bot bypass
-with st.expander("🍪 YouTube Cookie Authentication (Upload or Paste Cookies Here)", expanded=st.session_state.get("show_cookie_box", False)):
-    st.markdown("""
-    YouTube occasionally challenges cloud hosting IP addresses (AWS, Streamlit Cloud). Built-in session cookies are bundled in this app.
-    
-    If you wish to use your own account cookies:
-    
-    **Option A: Upload or paste cookies here (Instant)**
-    """)
-    cookie_upload = st.file_uploader("Upload cookies.txt file", type=["txt"], key="cookie_uploader")
-    cookie_text = st.text_area("Or paste cookies.txt content here", height=100, key="cookie_text_area")
-    
-    if cookie_upload is not None:
-        st.session_state.custom_cookies = cookie_upload.getvalue().decode('utf-8', errors='ignore')
-        st.success("✅ Custom cookie file applied for this session!")
-    elif cookie_text.strip():
-        st.session_state.custom_cookies = cookie_text.strip()
-        st.success("✅ Custom cookies applied for this session!")
-        
-    st.markdown("""
-    ---
-    **Option B: Add to Streamlit Cloud Secrets (Permanent)**
-    1. Install the free Chrome extension **Get cookies.txt locally**.
-    2. Visit [youtube.com](https://youtube.com) and click **Export**.
-    3. In your Streamlit Cloud dashboard &rarr; App **Settings** &rarr; **Secrets**, paste:
-    ```toml
-    YOUTUBE_COOKIES = \"\"\"
-    # Netscape HTTP Cookie File
-    # Paste your exported cookies here
-    \"\"\"
-    ```
-    4. Save! Your app will authenticate with YouTube directly as a real browser user.
     """)
 
 # Footer
