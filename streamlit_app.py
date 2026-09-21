@@ -189,6 +189,26 @@ st.markdown("""
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
 
+def fetch_guest_cookies():
+    try:
+        import requests
+        import time
+        s = requests.Session()
+        s.headers.update({'User-Agent': USER_AGENT})
+        r = s.get('https://www.youtube.com', timeout=8)
+        lines = ['# Netscape HTTP Cookie File']
+        exp = int(time.time()) + 365*86400
+        for c in s.cookies:
+            domain = c.domain if c.domain.startswith('.') else '.' + c.domain
+            lines.append('\t'.join([domain, 'TRUE', c.path or '/', 'TRUE' if c.secure else 'FALSE', str(exp), c.name, c.value]))
+        content = '\n'.join(lines) + '\n'
+        guest_path = os.path.join(tempfile.gettempdir(), "guest_cookies.txt")
+        with open(guest_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return guest_path
+    except Exception:
+        return None
+
 def get_cookies_path():
     if "custom_cookies" in st.session_state and st.session_state.custom_cookies:
         path = os.path.join(tempfile.gettempdir(), "user_cookies.txt")
@@ -218,7 +238,7 @@ def get_cookies_path():
             return path
         except Exception:
             pass
-    return None
+    return fetch_guest_cookies()
 
 def clean_url(raw_url: str) -> str:
     if not raw_url:
@@ -322,6 +342,7 @@ if fetch_btn and url_input.strip():
         'noplaylist': True,
         'extract_flat': False,
         'geo_bypass': True,
+        'js_runtimes': {'node': {}},
     }
     
     cookies = get_cookies_path()
@@ -331,7 +352,7 @@ if fetch_btn and url_input.strip():
     if "youtube.com" in target_url or "youtu.be" in target_url:
         ydl_opts['extractor_args'] = {
             'youtube': {
-                'player_client': ['visionos', 'tv_embedded', 'android', 'web_safari'],
+                'player_client': ['visionos', 'mediaconnect', 'android_creator', 'tv_embedded', 'web_safari'],
             }
         }
 
@@ -432,12 +453,13 @@ if info:
                         'nocheckcertificate': True,
                         'outtmpl': out_template,
                         'geo_bypass': True,
+                        'js_runtimes': {'node': {}},
                     }
                     
                     if "youtube.com" in st.session_state.target_url or "youtu.be" in st.session_state.target_url:
                         dl_opts['extractor_args'] = {
                             'youtube': {
-                                'player_client': ['visionos', 'tv_embedded', 'android'],
+                                'player_client': ['visionos', 'mediaconnect', 'android_creator', 'tv_embedded'],
                             }
                         }
 
@@ -474,9 +496,9 @@ if info:
                         with yt_dlp.YoutubeDL(dl_opts) as ydl:
                             ydl.download([st.session_state.target_url])
                     except Exception as dl_err:
-                        # Fallback try with visionos, tv_embedded, and android clients
+                        # Fallback try with visionos, mediaconnect, and android_creator clients
                         download_succeeded = False
-                        for fb_client in ['visionos', 'tv_embedded', 'android']:
+                        for fb_client in ['visionos', 'mediaconnect', 'android_creator', 'tv_embedded']:
                             try:
                                 fb_opts = dict(dl_opts)
                                 fb_opts['extractor_args'] = {'youtube': {'player_client': [fb_client]}}
@@ -510,7 +532,16 @@ if info:
             except Exception as dl_err:
                 err_text = str(dl_err)
                 if "403" in err_text or "forbidden" in err_text.lower():
-                    st.error("🚫 **YouTube Cloud Block (HTTP 403: Forbidden)**: YouTube detects that this request is coming from a cloud datacenter IP (Streamlit Cloud / AWS). To unlock downloads, simply upload or paste your `cookies.txt` in the **YouTube Cookie Authentication** section below.")
+                    st.session_state.show_cookie_box = True
+                    st.error("🚫 **YouTube Cloud Block (HTTP 403: Forbidden)**: YouTube detected a cloud server IP. Built-in cookies have been updated in this release. You can also paste or upload custom cookies right below:")
+                    err_c_upload = st.file_uploader("Upload cookies.txt", type=["txt"], key="inline_cookie_uploader")
+                    err_c_text = st.text_area("Or paste cookies.txt content here", height=70, key="inline_cookie_text")
+                    if err_c_upload is not None:
+                        st.session_state.custom_cookies = err_c_upload.getvalue().decode('utf-8', errors='ignore')
+                        st.success("✅ Cookies saved! Please click 'Generate Download Link' again.")
+                    elif err_c_text.strip():
+                        st.session_state.custom_cookies = err_c_text.strip()
+                        st.success("✅ Cookies saved! Please click 'Generate Download Link' again.")
                 else:
                     st.error(f"Download error: {err_text}")
 
@@ -528,9 +559,11 @@ with st.expander("❓ Frequently Asked Questions"):
     """)
 
 # Cookie authentication for permanent cloud bot bypass
-with st.expander("🍪 YouTube Cookie Authentication (Permanent Cloud Bot Bypass)"):
+with st.expander("🍪 YouTube Cookie Authentication (Upload or Paste Cookies Here)", expanded=st.session_state.get("show_cookie_box", False)):
     st.markdown("""
-    YouTube occasionally challenges cloud hosting IP addresses (AWS, Streamlit Cloud). If you encounter 403 or bot challenges:
+    YouTube occasionally challenges cloud hosting IP addresses (AWS, Streamlit Cloud). Built-in session cookies are bundled in this app.
+    
+    If you wish to use your own account cookies:
     
     **Option A: Upload or paste cookies here (Instant)**
     """)
