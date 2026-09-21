@@ -47,45 +47,71 @@ st.markdown("""
     .stDeployButton {display: none !important;}
     div[data-testid="stDecoration"] {display: none !important;}
     div[data-testid="stToolbar"] {display: none !important;}
+    div[data-testid="stStatusWidget"] {display: none !important;}
 
-    .stApp {
+    /* App Base */
+    html, body, .stApp {
         background-color: #0A0A0A !important;
+        background: #0A0A0A !important;
         color: #F5F5F5 !important;
         font-family: var(--font-display) !important;
+        -webkit-tap-highlight-color: transparent;
+        overflow-x: hidden !important;
+    }
+
+    /* Responsive App Container */
+    .block-container {
+        padding-top: 1.25rem !important;
+        padding-bottom: 5.5rem !important;
+        padding-left: 0.85rem !important;
+        padding-right: 0.85rem !important;
+        max-width: 680px !important;
+        margin: 0 auto !important;
+    }
+
+    @media (min-width: 768px) {
+        .block-container {
+            padding-top: 2rem !important;
+            padding-bottom: 5rem !important;
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+            max-width: 720px !important;
+        }
     }
 
     /* Global Typography */
-    h1, h2, h3, h4, p, span, div, input, button {
+    h1, h2, h3, h4, p, span, div, input, button, select {
         font-family: var(--font-display) !important;
     }
 
-    /* Top Navbar */
+    /* Top App Bar / Navbar */
     .official-navbar {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0.85rem 1.25rem;
-        background: rgba(10, 10, 10, 0.75);
+        padding: 0.65rem 1rem;
+        background: rgba(18, 18, 24, 0.8);
         backdrop-filter: blur(16px) saturate(170%);
         -webkit-backdrop-filter: blur(16px) saturate(170%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 9999px;
-        margin-bottom: 2.5rem;
-        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        margin-bottom: 1.75rem;
+        box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.6);
     }
     .brand-wrap {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: 0.65rem;
         text-decoration: none;
     }
     .brand-icon-box {
-        width: 38px;
-        height: 38px;
-        border-radius: 12px;
-        background: rgba(28, 28, 34, 0.85);
+        width: 36px;
+        height: 36px;
+        border-radius: 11px;
+        background: rgba(28, 28, 34, 0.9);
         border: 1px solid rgba(255, 255, 255, 0.15);
-        border-top: 1px solid rgba(255, 255, 255, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.35);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -110,80 +136,80 @@ st.markdown("""
         letter-spacing: -0.02em;
     }
     .brand-badge-get {
-        background: rgba(37, 99, 235, 0.18);
-        border: 1px solid rgba(37, 99, 235, 0.45);
+        background: rgba(37, 99, 235, 0.2);
+        border: 1px solid rgba(37, 99, 235, 0.5);
         color: #60a5fa;
-        font-size: 0.95rem;
+        font-size: 0.88rem;
         font-weight: 900;
-        padding: 0.15rem 0.6rem;
-        border-radius: 8px;
+        padding: 0.15rem 0.55rem;
+        border-radius: 7px;
         margin-left: 0.25rem;
-        box-shadow: 0 0 14px rgba(37, 99, 235, 0.35);
+        box-shadow: 0 0 12px rgba(37, 99, 235, 0.3);
     }
     .nav-badge-pill {
         display: inline-flex;
         align-items: center;
-        gap: 0.45rem;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        gap: 0.4rem;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         color: #a3a3a3;
         font-size: 0.72rem;
         font-weight: 600;
-        padding: 0.35rem 0.85rem;
+        padding: 0.3rem 0.75rem;
         border-radius: 9999px;
     }
 
     /* Hero Section */
     .hero-wrap {
         text-align: center;
-        padding: 0 0.5rem 1.5rem;
+        padding: 0 0.25rem 1.25rem;
     }
     .hero-pill-badge {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        background: rgba(24, 24, 28, 0.65);
+        gap: 0.45rem;
+        background: rgba(24, 24, 30, 0.7);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-top: 1px solid rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
         color: #a3a3a3;
         font-size: 0.75rem;
         font-weight: 700;
-        padding: 0.4rem 1rem;
+        padding: 0.35rem 0.95rem;
         border-radius: 9999px;
-        margin-bottom: 1.25rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
     }
     .pulse-dot {
         width: 7px;
         height: 7px;
         border-radius: 50%;
-        background-color: #2563EB;
+        background-color: #22C55E;
         display: inline-block;
-        box-shadow: 0 0 10px #2563EB;
+        box-shadow: 0 0 8px #22C55E;
     }
     .hero-h1 {
-        font-size: 2.65rem;
+        font-size: clamp(1.75rem, 6vw, 2.75rem);
         font-weight: 900;
         letter-spacing: -0.04em;
-        line-height: 1.15;
+        line-height: 1.18;
         color: #ffffff;
-        margin-bottom: 0.75rem;
+        margin: 0 0 0.65rem 0;
     }
     .hero-elevated-badge {
         display: inline-block;
-        background: rgba(28, 28, 34, 0.85);
+        background: rgba(28, 28, 36, 0.85);
         backdrop-filter: blur(20px) saturate(180%);
         -webkit-backdrop-filter: blur(20px) saturate(180%);
-        border: 1px solid rgba(37, 99, 235, 0.4);
-        border-top: 1px solid rgba(255, 255, 255, 0.25);
-        border-radius: 18px;
-        padding: 0.35rem 1.25rem;
-        margin-top: 0.4rem;
+        border: 1px solid rgba(37, 99, 235, 0.45);
+        border-top: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 14px;
+        padding: 0.25rem 1rem;
+        margin-top: 0.35rem;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+        box-shadow: 0 12px 35px -6px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
     }
     .hero-elevated-badge::before {
         content: "";
@@ -192,7 +218,7 @@ st.markdown("""
         left: 0;
         right: 0;
         height: 50%;
-        background: linear-gradient(to bottom, rgba(255,255,255,0.25), transparent);
+        background: linear-gradient(to bottom, rgba(255,255,255,0.22), transparent);
         pointer-events: none;
     }
     .hero-gradient-text {
@@ -200,55 +226,113 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 900;
-        text-shadow: 0 0 35px rgba(37, 99, 235, 0.6);
+        text-shadow: 0 0 25px rgba(37, 99, 235, 0.5);
     }
     .hero-p {
-        color: #a3a3a3;
-        font-size: 0.95rem;
-        max-width: 520px;
-        margin: 0.85rem auto 1.5rem;
+        color: #A3A3A3;
+        font-size: clamp(0.82rem, 3vw, 0.95rem);
+        max-width: 480px;
+        margin: 0.65rem auto 1.25rem;
         line-height: 1.5;
     }
 
-    /* Platform Bar */
+    /* Platform Bar (Horizontal Carousel for Mobile App Feel) */
     .platforms-wrap {
         display: flex;
-        justify-content: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        margin-bottom: 2rem;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.45rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 0.25rem 0.25rem 0.75rem;
+        margin-bottom: 1.25rem;
+        scrollbar-width: none;
+    }
+    .platforms-wrap::-webkit-scrollbar {
+        display: none;
+    }
+    @media (min-width: 640px) {
+        .platforms-wrap {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
     }
     .platform-item {
-        background: rgba(20, 20, 24, 0.75);
+        background: rgba(22, 22, 28, 0.8);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         color: #e5e5e5;
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         font-weight: 600;
-        padding: 0.4rem 0.85rem;
+        padding: 0.38rem 0.8rem;
         border-radius: 12px;
         border: 1px solid rgba(255, 255, 255, 0.08);
-        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        border-top: 1px solid rgba(255, 255, 255, 0.18);
         display: inline-flex;
         align-items: center;
-        gap: 0.45rem;
+        gap: 0.4rem;
+        white-space: nowrap;
+        flex-shrink: 0;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        transition: all 0.2s ease;
     }
 
-    /* Streamlit Input & Buttons */
+    /* Universal Liquid Glass Inputs - 100% Theme Immune (No White Boxes) */
+    div[data-testid="stTextInput"],
+    div[data-testid="stTextInput"] > div,
+    div[data-testid="stTextInput"] > div > div,
+    div[data-baseweb="input"],
+    div[data-baseweb="base-input"],
+    .stTextInput input,
+    div[data-testid="stTextInput"] input,
+    input[type="text"],
+    input[type="url"],
+    input {
+        background-color: rgba(18, 18, 24, 0.95) !important;
+        background: rgba(18, 18, 24, 0.95) !important;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+    }
+
     div[data-baseweb="input"] {
-        background-color: rgba(16, 16, 20, 0.85) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+        background: rgba(18, 18, 24, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.28) !important;
         border-radius: 16px !important;
-        box-shadow: inset 0 2px 6px rgba(0,0,0,0.4) !important;
-        backdrop-filter: blur(12px) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+        transition: all 0.2s ease !important;
+        min-height: 52px !important;
     }
-    div[data-baseweb="input"] input {
-        color: #ffffff !important;
-        font-size: 1rem !important;
-        padding: 0.75rem 1rem !important;
+
+    div[data-baseweb="input"]:focus-within {
+        border-color: #3B82F6 !important;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3), 0 8px 30px rgba(37, 99, 235, 0.35) !important;
     }
+
+    div[data-baseweb="base-input"] {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        min-height: 52px !important;
+    }
+
+    div[data-testid="stTextInput"] input {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        font-size: 0.92rem !important;
+        padding: 0.85rem 1.1rem !important;
+    }
+
+    div[data-testid="stTextInput"] input::placeholder {
+        color: #71717A !important;
+        -webkit-text-fill-color: #71717A !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* Buttons (Native App Feel: Large, Tactile, Specular Sheen) */
     .stButton>button {
         background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
         color: #ffffff !important;
@@ -256,85 +340,136 @@ st.markdown("""
         font-size: 0.95rem !important;
         border-radius: 14px !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.35) !important;
+        min-height: 50px !important;
         padding: 0.75rem 1.5rem !important;
         width: 100% !important;
-        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35) !important;
-        transition: all 0.2s ease !important;
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4) !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+        cursor: pointer !important;
+    }
+    .stButton>button:active {
+        transform: scale(0.98) !important;
     }
     .stButton>button:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.55) !important;
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.6) !important;
     }
+
     .stDownloadButton>button {
         background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
         color: #ffffff !important;
         font-weight: 800 !important;
         font-size: 1rem !important;
         border-radius: 14px !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.22) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.38) !important;
+        min-height: 52px !important;
         padding: 0.85rem 1.5rem !important;
         width: 100% !important;
-        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4) !important;
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.45) !important;
+    }
+    .stDownloadButton>button:active {
+        transform: scale(0.98) !important;
+    }
+
+    /* Selectbox (Dropdown) Styling */
+    div[data-baseweb="select"] > div {
+        background-color: rgba(18, 18, 24, 0.95) !important;
+        color: #F5F5F5 !important;
+        border-radius: 14px !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.25) !important;
+        min-height: 48px !important;
+    }
+    div[data-baseweb="select"] span {
+        color: #FFFFFF !important;
+    }
+    div[data-baseweb="popover"], ul[role="listbox"] {
+        background-color: #141418 !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        border-radius: 14px !important;
+    }
+    li[role="option"] {
+        color: #E5E5E5 !important;
+    }
+    li[role="option"]:hover, li[aria-selected="true"] {
+        background-color: rgba(37, 99, 235, 0.3) !important;
+        color: #FFFFFF !important;
     }
 
     /* Video Preview Card */
     .official-video-card {
-        background: rgba(20, 20, 24, 0.75);
+        background: rgba(20, 20, 26, 0.8);
         backdrop-filter: blur(16px) saturate(170%);
         -webkit-backdrop-filter: blur(16px) saturate(170%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 20px;
-        padding: 1.25rem;
-        margin: 1.75rem 0;
-        box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 18px;
+        padding: 1.1rem;
+        margin: 1.25rem 0;
+        box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
     }
     .card-title {
-        font-size: 1.15rem;
+        font-size: 1.05rem;
         font-weight: 700;
         color: #F5F5F5;
-        margin-top: 0.75rem;
-        margin-bottom: 0.5rem;
+        margin-top: 0.65rem;
+        margin-bottom: 0.4rem;
         line-height: 1.35;
     }
     .card-meta {
         display: flex;
-        gap: 0.75rem;
+        gap: 0.6rem;
         color: #A3A3A3;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         flex-wrap: wrap;
     }
 
     /* Feature Grid (How It Works & Supported Platforms) */
     .grid-wrap {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-top: 1.25rem;
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+        margin-top: 1rem;
     }
+    @media (min-width: 640px) {
+        .grid-wrap {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+    }
+    .grid-platforms {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+    @media (min-width: 640px) {
+        .grid-platforms {
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 0.85rem;
+        }
+    }
+
     .feature-card {
-        background: rgba(20, 20, 24, 0.65);
+        background: rgba(20, 20, 26, 0.7);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.08);
-        border-top: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 18px;
-        padding: 1.25rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 16px;
+        padding: 1.1rem;
         transition: all 0.2s ease;
-    }
-    .feature-card:hover {
-        border-color: rgba(37, 99, 235, 0.5);
-        transform: translateY(-2px);
     }
     .feature-num {
         font-size: 0.7rem;
         font-weight: 900;
-        color: #666666;
+        color: #3b82f6;
         font-family: monospace !important;
-        background: rgba(255,255,255,0.05);
+        background: rgba(37, 99, 235, 0.15);
+        border: 1px solid rgba(37, 99, 235, 0.3);
         padding: 0.2rem 0.5rem;
-        border-radius: 8px;
+        border-radius: 7px;
     }
     .feature-title {
         font-size: 0.95rem;
@@ -347,6 +482,54 @@ st.markdown("""
         font-size: 0.8rem;
         color: #A3A3A3;
         line-height: 1.45;
+    }
+
+    /* Mobile Bottom App Dock */
+    .mobile-app-dock {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        position: fixed;
+        bottom: 0.75rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 1.5rem);
+        max-width: 460px;
+        background: rgba(18, 18, 24, 0.85);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-top: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 9999px;
+        padding: 0.6rem 1rem;
+        z-index: 999;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    }
+    .dock-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.15rem;
+        color: #A3A3A3;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .dock-item.active {
+        color: #60a5fa;
+    }
+    @media (min-width: 768px) {
+        .mobile-app-dock {
+            display: none;
+        }
+    }
+
+    /* Alert Boxes (Streamlit Success/Error/Info) Clean Styling */
+    div[data-testid="stAlert"] {
+        background-color: rgba(22, 22, 28, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 14px !important;
+        color: #F5F5F5 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -407,12 +590,14 @@ def get_cookies_path():
 def get_proxy():
     try:
         if "PROXY" in st.secrets:
-            return st.secrets["PROXY"]
+            return st.secrets["PROXY"].strip()
         if "HTTP_PROXY" in st.secrets:
-            return st.secrets["HTTP_PROXY"]
+            return st.secrets["HTTP_PROXY"].strip()
+        if "HTTPS_PROXY" in st.secrets:
+            return st.secrets["HTTPS_PROXY"].strip()
     except Exception:
         pass
-    return os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY")
+    return (os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY") or os.environ.get("PROXY") or "").strip() or None
 
 def clean_url(raw_url: str) -> str:
     if not raw_url:
@@ -466,7 +651,7 @@ st.markdown("""
 <div class="official-navbar">
     <div class="brand-wrap">
         <div class="brand-icon-box">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 4v12" />
                 <path d="m7 11 5 5 5-5" />
                 <path d="M5 20h14" />
@@ -479,7 +664,7 @@ st.markdown("""
     </div>
     <div class="nav-badge-pill">
         <span class="pulse-dot"></span>
-        <span>Stateless Engine • Free</span>
+        <span>App v2.0 • Free</span>
     </div>
 </div>
 
@@ -500,25 +685,25 @@ st.markdown("""
         Download supported public videos from YouTube, Instagram Reels, TikTok, Facebook, and X. Fast, free, and no account required.
     </p>
     <div class="platforms-wrap">
-        <span class="platform-item"><span style="color:#FF0000; font-size:1rem;">▶</span> YouTube</span>
-        <span class="platform-item"><span style="color:#E1306C; font-size:1rem;">●</span> Instagram</span>
-        <span class="platform-item"><span style="color:#FFFFFF; font-size:1rem;">♪</span> TikTok</span>
-        <span class="platform-item"><span style="color:#1877F2; font-size:1rem;">f</span> Facebook</span>
-        <span class="platform-item"><span style="color:#1DA1F2; font-size:1rem;">𝕏</span> Twitter / X</span>
+        <span class="platform-item"><span style="color:#FF0000; font-size:0.9rem;">▶</span> YouTube</span>
+        <span class="platform-item"><span style="color:#E1306C; font-size:0.9rem;">●</span> Instagram</span>
+        <span class="platform-item"><span style="color:#FFFFFF; font-size:0.9rem;">♪</span> TikTok</span>
+        <span class="platform-item"><span style="color:#1877F2; font-size:0.9rem;">f</span> Facebook</span>
+        <span class="platform-item"><span style="color:#1DA1F2; font-size:0.9rem;">𝕏</span> Twitter / X</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# URL Input
+# URL Input Field
 url_input = st.text_input(
     label="Video URL",
-    placeholder="Paste video link here (e.g., https://www.instagram.com/reel/... or https://youtu.be/...)",
+    placeholder="Paste video link here (YouTube, Instagram, TikTok, Facebook, X)...",
     label_visibility="collapsed"
 )
 
 col1, col2 = st.columns([3, 1])
 with col1:
-    fetch_btn = st.button("Fetch Video Details", width="stretch")
+    fetch_btn = st.button("⚡ Fetch Video Details", width="stretch")
 with col2:
     if st.button("Clear", width="stretch"):
         st.session_state.clear()
@@ -766,36 +951,36 @@ st.markdown("""
     </div>
 </div>
 
-<div style="margin-top: 3rem; margin-bottom: 2.5rem;">
-    <div style="text-align: left; margin-bottom: 1rem;">
-        <h2 style="font-size: 1.4rem; font-weight: 700; color: #F5F5F5; margin-bottom: 0.25rem;">Supported Platforms</h2>
-        <p style="font-size: 0.85rem; color: #A3A3A3; margin: 0;">Optimized download engines tailored for all major social networks.</p>
+<div style="margin-top: 2.75rem; margin-bottom: 2rem;">
+    <div style="text-align: left; margin-bottom: 0.85rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 700; color: #F5F5F5; margin-bottom: 0.2rem;">Supported Platforms</h2>
+        <p style="font-size: 0.82rem; color: #A3A3A3; margin: 0;">Optimized download engines tailored for all major social networks.</p>
     </div>
-    <div class="grid-wrap">
+    <div class="grid-platforms">
         <div class="feature-card">
-            <div style="font-size: 1.25rem; color: #FF0000; margin-bottom: 0.25rem;">▶</div>
+            <div style="font-size: 1.2rem; color: #FF0000; margin-bottom: 0.25rem;">▶</div>
             <div class="feature-title">YouTube</div>
-            <div class="feature-desc">Videos, Shorts, and Audio extraction up to 1080p Full HD.</div>
+            <div class="feature-desc">Videos, Shorts, MP3 audio.</div>
         </div>
         <div class="feature-card">
-            <div style="font-size: 1.25rem; color: #E1306C; margin-bottom: 0.25rem;">●</div>
+            <div style="font-size: 1.2rem; color: #E1306C; margin-bottom: 0.25rem;">●</div>
             <div class="feature-title">Instagram</div>
-            <div class="feature-desc">Reels, Video Posts, and Carousel videos in original high quality.</div>
+            <div class="feature-desc">Reels, Videos, Carousel.</div>
         </div>
         <div class="feature-card">
-            <div style="font-size: 1.25rem; color: #FFFFFF; margin-bottom: 0.25rem;">♪</div>
+            <div style="font-size: 1.2rem; color: #FFFFFF; margin-bottom: 0.25rem;">♪</div>
             <div class="feature-title">TikTok</div>
-            <div class="feature-desc">Fast video downloads directly without watermarks.</div>
+            <div class="feature-desc">Fast videos no watermark.</div>
         </div>
         <div class="feature-card">
-            <div style="font-size: 1.25rem; color: #1877F2; margin-bottom: 0.25rem;">f</div>
+            <div style="font-size: 1.2rem; color: #1877F2; margin-bottom: 0.25rem;">f</div>
             <div class="feature-title">Facebook</div>
-            <div class="feature-desc">Public watch videos, reels, and clips in SD & HD MP4.</div>
+            <div class="feature-desc">Watch clips, Reels in HD.</div>
         </div>
-        <div class="feature-card">
-            <div style="font-size: 1.25rem; color: #1DA1F2; margin-bottom: 0.25rem;">𝕏</div>
+        <div class="feature-card" style="grid-column: span 2 sm:grid-column: span 1;">
+            <div style="font-size: 1.2rem; color: #1DA1F2; margin-bottom: 0.25rem;">𝕏</div>
             <div class="feature-title">Twitter / X</div>
-            <div class="feature-desc">Video posts and animated GIFs saved directly to your device.</div>
+            <div class="feature-desc">Direct MP4 video download.</div>
         </div>
     </div>
 </div>
@@ -810,16 +995,13 @@ with st.expander("Frequently Asked Questions"):
     **Which platforms are supported?**  
     Instagram Reels & Posts, TikTok, Facebook Videos, Twitter / X, and YouTube.
     
-    **Why does YouTube restrict cloud servers?**  
-    YouTube flags automated media streaming requests from public cloud datacenter IP ranges (AWS / Streamlit Cloud). Instagram, TikTok, Facebook, and X do not restrict cloud servers.
-    
     **Can I download private videos?**  
     No. Only public media can be downloaded according to platform policies.
     """)
 
-# Official Footer Matching Footer.tsx
+# Official Footer & Mobile App Dock
 st.markdown("""
-<div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.08); text-align: center;">
+<div style="margin-top: 3.5rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.08); text-align: center; margin-bottom: 3.5rem;">
     <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem;">
         <span class="brand-text-pak">Pak</span>
         <span class="brand-badge-get">Get</span>
@@ -828,7 +1010,27 @@ st.markdown("""
         A high-performance, stateless progressive web app for downloading social media in HD without accounts or tracking.
     </p>
     <div style="color: #444444; font-size: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
-        © 2026 <b>PakGet</b>. All rights reserved. Purely for personal, non-commercial use. Not affiliated with YouTube, Meta, ByteDance, or X.
+        © 2026 <b>PakGet</b>. All rights reserved. Purely for personal, non-commercial use.
+    </div>
+</div>
+
+<!-- Mobile Bottom App Dock for Native App Experience -->
+<div class="mobile-app-dock">
+    <div class="dock-item active">
+        <span style="font-size: 1rem;">⚡</span>
+        <span>Downloader</span>
+    </div>
+    <div class="dock-item">
+        <span style="font-size: 1rem;">🔒</span>
+        <span>Stateless</span>
+    </div>
+    <div class="dock-item">
+        <span style="font-size: 1rem;">📱</span>
+        <span>App Ready</span>
+    </div>
+    <div class="dock-item">
+        <span style="font-size: 1rem;">✨</span>
+        <span>100% Free</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
