@@ -363,24 +363,33 @@ info = st.session_state.video_info
 if info:
     platform_name = detect_platform(st.session_state.target_url)
     title = info.get("title", "Untitled Video")
-    thumbnail = info.get("thumbnail") or (info.get("thumbnails", [{}])[-1].get("url", ""))
     uploader = info.get("uploader") or info.get("channel", "Creator")
     duration_str = format_duration(info.get("duration"))
     view_count = f"{info.get('view_count', 0):,}" if info.get('view_count') else None
 
-    # Card layout
-    st.markdown('<div class="video-card">', unsafe_allow_html=True)
-    if thumbnail:
-        st.image(thumbnail, use_container_width=True)
-    
-    st.markdown(f'<div class="video-title">{title}</div>', unsafe_allow_html=True)
+    # Resolve reliable image thumbnail
+    video_id = info.get("id")
+    if "youtube" in platform_name.lower() and video_id:
+        thumbnail_url = f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
+    else:
+        thumbnail_url = info.get("thumbnail") or (info.get("thumbnails") and info["thumbnails"][-1].get("url")) or ""
+
     meta_html = f"<b>Platform:</b> {platform_name} &nbsp;•&nbsp; <b>Creator:</b> {uploader}"
     if duration_str:
         meta_html += f" &nbsp;•&nbsp; <b>Duration:</b> {duration_str}"
     if view_count:
         meta_html += f" &nbsp;•&nbsp; <b>Views:</b> {view_count}"
-    st.markdown(f'<div class="meta-row">{meta_html}</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Self-contained clean card layout (prevents broken image and DOM glitches)
+    img_html = f'<img src="{thumbnail_url}" style="width: 100%; border-radius: 12px; max-height: 400px; object-fit: cover; margin-bottom: 0.85rem;" alt="{title}" />' if thumbnail_url else ''
+    card_html = f'''
+    <div class="video-card">
+        {img_html}
+        <div class="video-title">{title}</div>
+        <div class="meta-row">{meta_html}</div>
+    </div>
+    '''
+    st.markdown(card_html, unsafe_allow_html=True)
 
     # Format Quality Selection
     st.subheader("Choose Download Quality")
@@ -425,7 +434,7 @@ if info:
                     if "youtube.com" in st.session_state.target_url or "youtu.be" in st.session_state.target_url:
                         dl_opts['extractor_args'] = {
                             'youtube': {
-                                'player_client': ['web_safari', 'visionos', 'mweb'],
+                                'player_client': ['visionos', 'web_safari'],
                             }
                         }
 
@@ -448,7 +457,7 @@ if info:
                     else:
                         if has_ffmpeg:
                             if "Best Quality" in format_choice:
-                                dl_opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best'
+                                dl_opts['format'] = 'bestvideo+bestaudio/best'
                             elif "720p" in format_choice:
                                 dl_opts['format'] = 'bestvideo[height<=720]+bestaudio/best[height<=720]/best'
                             elif "480p" in format_choice:
@@ -457,24 +466,21 @@ if info:
                                 dl_opts['format'] = 'bestvideo[height<=360]+bestaudio/best[height<=360]/best'
                             dl_opts['merge_output_format'] = 'mp4'
                         else:
-                            # Fallback when ffmpeg is missing: single stream pre-muxed mp4
-                            dl_opts['format'] = 'best[ext=mp4]/best'
+                            dl_opts['format'] = 'best'
 
                     try:
                         with yt_dlp.YoutubeDL(dl_opts) as ydl:
                             ydl.download([st.session_state.target_url])
                     except Exception as dl_err:
                         err_str = str(dl_err)
-                        if "403" in err_str or "forbidden" in err_str.lower() or "bot" in err_str.lower() or "sign in" in err_str.lower():
-                            st.warning("🔄 Bypassing stream protection with visionos... retrying...")
-                            dl_opts['extractor_args'] = {
-                                'youtube': {'player_client': ['visionos', 'tv']}
-                            }
-                            dl_opts['format'] = 'best[ext=mp4]/best'
-                            with yt_dlp.YoutubeDL(dl_opts) as fallback_ydl:
-                                fallback_ydl.download([st.session_state.target_url])
-                        else:
-                            raise dl_err
+                        # Automatic retry with visionos client and bestvideo+bestaudio
+                        dl_opts['extractor_args'] = {
+                            'youtube': {'player_client': ['visionos']}
+                        }
+                        dl_opts['format'] = 'bestvideo+bestaudio/best'
+                        dl_opts['merge_output_format'] = 'mp4'
+                        with yt_dlp.YoutubeDL(dl_opts) as fallback_ydl:
+                            fallback_ydl.download([st.session_state.target_url])
                         
                     downloaded_files = [f for f in os.listdir(temp_dir) if not f.endswith('.part')]
                     if downloaded_files:
