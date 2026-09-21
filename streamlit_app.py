@@ -19,170 +19,334 @@ import yt_dlp
 
 # Page configuration
 st.set_page_config(
-    page_title="PakGet — Free Video Downloader",
-    page_icon="⚡",
+    page_title="PakGet — Free Video Downloader in Pakistan",
+    page_icon="📥",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS matching the Next.js dark liquid glass aesthetic
+# Custom CSS matching the Next.js official website liquid glass design system
 st.markdown("""
 <style>
-    @import url('https://api.fontshare.com/v2/css?f[]=satoshi@700,800,900&display=swap');
+    @import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,900&display=swap');
+
+    :root {
+        --bg-primary: #0A0A0A;
+        --accent: #2563EB;
+        --accent-hover: #1D4ED8;
+        --text-primary: #F5F5F5;
+        --text-secondary: #A3A3A3;
+        --text-muted: #666666;
+        --font-display: 'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Hide Streamlit default branding & header chrome */
+    #MainMenu {display: none !important;}
+    footer {display: none !important;}
+    header {display: none !important;}
+    .stDeployButton {display: none !important;}
+    div[data-testid="stDecoration"] {display: none !important;}
+    div[data-testid="stToolbar"] {display: none !important;}
 
     .stApp {
-        background-color: #0b0f19;
-        color: #f1f5f9;
-        font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: #0A0A0A !important;
+        color: #F5F5F5 !important;
+        font-family: var(--font-display) !important;
     }
-    
-    /* Header Section */
-    .hero-container {
+
+    /* Global Typography */
+    h1, h2, h3, h4, p, span, div, input, button {
+        font-family: var(--font-display) !important;
+    }
+
+    /* Top Navbar */
+    .official-navbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.85rem 1.25rem;
+        background: rgba(10, 10, 10, 0.75);
+        backdrop-filter: blur(16px) saturate(170%);
+        -webkit-backdrop-filter: blur(16px) saturate(170%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 9999px;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+    }
+    .brand-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+    }
+    .brand-icon-box {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: rgba(28, 28, 34, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-top: 1px solid rgba(255, 255, 255, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    }
+    .brand-icon-box::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 50%;
+        background: linear-gradient(to bottom, rgba(255,255,255,0.25), transparent);
+        pointer-events: none;
+    }
+    .brand-text-pak {
+        font-size: 1.25rem;
+        font-weight: 900;
+        color: #FFFFFF;
+        letter-spacing: -0.02em;
+    }
+    .brand-badge-get {
+        background: rgba(37, 99, 235, 0.18);
+        border: 1px solid rgba(37, 99, 235, 0.45);
+        color: #60a5fa;
+        font-size: 0.95rem;
+        font-weight: 900;
+        padding: 0.15rem 0.6rem;
+        border-radius: 8px;
+        margin-left: 0.25rem;
+        box-shadow: 0 0 14px rgba(37, 99, 235, 0.35);
+    }
+    .nav-badge-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #a3a3a3;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.35rem 0.85rem;
+        border-radius: 9999px;
+    }
+
+    /* Hero Section */
+    .hero-wrap {
         text-align: center;
-        padding: 2rem 0.5rem 1rem;
+        padding: 0 0.5rem 1.5rem;
     }
-    .hero-pill {
+    .hero-pill-badge {
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        background: rgba(37, 99, 235, 0.12);
-        color: #93c5fd;
+        background: rgba(24, 24, 28, 0.65);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: 1px solid rgba(255, 255, 255, 0.18);
+        color: #a3a3a3;
         font-size: 0.75rem;
         font-weight: 700;
         padding: 0.4rem 1rem;
         border-radius: 9999px;
-        border: 1px solid rgba(59, 130, 246, 0.3);
         margin-bottom: 1.25rem;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
-    .pill-dot {
-        width: 8px;
-        height: 8px;
+    .pulse-dot {
+        width: 7px;
+        height: 7px;
         border-radius: 50%;
-        background-color: #3b82f6;
+        background-color: #2563EB;
         display: inline-block;
-        box-shadow: 0 0 10px #3b82f6;
+        box-shadow: 0 0 10px #2563EB;
     }
-    .hero-title {
-        font-size: 2.5rem;
+    .hero-h1 {
+        font-size: 2.65rem;
         font-weight: 900;
-        letter-spacing: -0.03em;
+        letter-spacing: -0.04em;
         line-height: 1.15;
         color: #ffffff;
         margin-bottom: 0.75rem;
     }
-    .hero-title-highlight {
+    .hero-elevated-badge {
         display: inline-block;
-        background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #818cf8 100%);
+        background: rgba(28, 28, 34, 0.85);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(37, 99, 235, 0.4);
+        border-top: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 18px;
+        padding: 0.35rem 1.25rem;
+        margin-top: 0.4rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+    }
+    .hero-elevated-badge::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 50%;
+        background: linear-gradient(to bottom, rgba(255,255,255,0.25), transparent);
+        pointer-events: none;
+    }
+    .hero-gradient-text {
+        background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #93c5fd 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 900;
-        text-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+        text-shadow: 0 0 35px rgba(37, 99, 235, 0.6);
     }
-    .hero-subtitle {
-        color: #94a3b8;
+    .hero-p {
+        color: #a3a3a3;
         font-size: 0.95rem;
         max-width: 520px;
-        margin: 0 auto 1.5rem;
+        margin: 0.85rem auto 1.5rem;
         line-height: 1.5;
     }
 
-    /* Platform Pills */
-    .platforms-bar {
+    /* Platform Bar */
+    .platforms-wrap {
         display: flex;
         justify-content: center;
         gap: 0.5rem;
         flex-wrap: wrap;
-        margin-bottom: 1.75rem;
+        margin-bottom: 2rem;
     }
-    .platform-pill {
-        background: #151d2f;
-        color: #e2e8f0;
-        font-size: 0.78rem;
+    .platform-item {
+        background: rgba(20, 20, 24, 0.75);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: #e5e5e5;
+        font-size: 0.8rem;
         font-weight: 600;
-        padding: 0.35rem 0.8rem;
-        border-radius: 10px;
-        border: 1px solid #1e293b;
+        padding: 0.4rem 0.85rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
         display: inline-flex;
         align-items: center;
-        gap: 0.35rem;
+        gap: 0.45rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    /* Video Card */
-    .video-card {
-        background: #111827;
-        border: 1px solid #1f2937;
-        border-radius: 16px;
-        padding: 1.25rem;
-        margin: 1.5rem 0;
-        box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.6);
-    }
-    .video-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #f8fafc;
-        margin-top: 0.75rem;
-        margin-bottom: 0.5rem;
-        line-height: 1.35;
-    }
-    .meta-row {
-        display: flex;
-        gap: 0.85rem;
-        color: #94a3b8;
-        font-size: 0.85rem;
-        flex-wrap: wrap;
-    }
-
-    /* Streamlit Input & Button Styling */
+    /* Streamlit Input & Buttons */
     div[data-baseweb="input"] {
-        background-color: #131b2e !important;
-        border: 1px solid #24324f !important;
-        border-radius: 14px !important;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2) !important;
+        background-color: rgba(16, 16, 20, 0.85) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 16px !important;
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.4) !important;
+        backdrop-filter: blur(12px) !important;
     }
     div[data-baseweb="input"] input {
         color: #ffffff !important;
         font-size: 1rem !important;
-        padding: 0.65rem 0.85rem !important;
+        padding: 0.75rem 1rem !important;
     }
     .stButton>button {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
-        color: white !important;
+        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
+        color: #ffffff !important;
         font-weight: 700 !important;
         font-size: 0.95rem !important;
         border-radius: 14px !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
-        padding: 0.7rem 1.5rem !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.3) !important;
+        padding: 0.75rem 1.5rem !important;
         width: 100% !important;
-        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4) !important;
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35) !important;
         transition: all 0.2s ease !important;
     }
     .stButton>button:hover {
         transform: translateY(-1px) !important;
-        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.6) !important;
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.55) !important;
     }
     .stDownloadButton>button {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-        color: white !important;
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+        color: #ffffff !important;
         font-weight: 800 !important;
         font-size: 1rem !important;
         border-radius: 14px !important;
-        border: none !important;
-        padding: 0.8rem 1.5rem !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        padding: 0.85rem 1.5rem !important;
         width: 100% !important;
-        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4) !important;
     }
-    
-    /* FAQ Accordion Box */
-    .faq-card {
-        background: #0f172a;
-        border: 1px solid #1e293b;
-        border-radius: 12px;
-        padding: 1rem;
-        margin-top: 1rem;
-        color: #94a3b8;
-        font-size: 0.88rem;
-        line-height: 1.5;
+
+    /* Video Preview Card */
+    .official-video-card {
+        background: rgba(20, 20, 24, 0.75);
+        backdrop-filter: blur(16px) saturate(170%);
+        -webkit-backdrop-filter: blur(16px) saturate(170%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 1.25rem;
+        margin: 1.75rem 0;
+        box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    }
+    .card-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #F5F5F5;
+        margin-top: 0.75rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.35;
+    }
+    .card-meta {
+        display: flex;
+        gap: 0.75rem;
+        color: #A3A3A3;
+        font-size: 0.85rem;
+        flex-wrap: wrap;
+    }
+
+    /* Feature Grid (How It Works & Supported Platforms) */
+    .grid-wrap {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1.25rem;
+    }
+    .feature-card {
+        background: rgba(20, 20, 24, 0.65);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 18px;
+        padding: 1.25rem;
+        transition: all 0.2s ease;
+    }
+    .feature-card:hover {
+        border-color: rgba(37, 99, 235, 0.5);
+        transform: translateY(-2px);
+    }
+    .feature-num {
+        font-size: 0.7rem;
+        font-weight: 900;
+        color: #666666;
+        font-family: monospace !important;
+        background: rgba(255,255,255,0.05);
+        padding: 0.2rem 0.5rem;
+        border-radius: 8px;
+    }
+    .feature-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #F5F5F5;
+        margin-top: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+    .feature-desc {
+        font-size: 0.8rem;
+        color: #A3A3A3;
+        line-height: 1.45;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -297,28 +461,50 @@ def sanitize_filename(title: str) -> str:
     cleaned = re.sub(r'[\/\\:*?"<>|]', '', title).strip()
     return cleaned[:80] if cleaned else "video"
 
-# Header UI
+# Top Navbar & Header UI
 st.markdown("""
-<div class="hero-container">
-    <div class="hero-pill">
-        <span class="pill-dot"></span>
-        <span>PakGet Engine</span>
-        <span>•</span>
-        <span style="color:#60a5fa;">100% Stateless & Free</span>
+<div class="official-navbar">
+    <div class="brand-wrap">
+        <div class="brand-icon-box">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 4v12" />
+                <path d="m7 11 5 5 5-5" />
+                <path d="M5 20h14" />
+            </svg>
+        </div>
+        <div style="display:flex; align-items:center;">
+            <span class="brand-text-pak">Pak</span>
+            <span class="brand-badge-get">Get</span>
+        </div>
     </div>
-    <div class="hero-title">
+    <div class="nav-badge-pill">
+        <span class="pulse-dot"></span>
+        <span>Stateless Engine • Free</span>
+    </div>
+</div>
+
+<div class="hero-wrap">
+    <div class="hero-pill-badge">
+        <span class="pulse-dot"></span>
+        <span style="color:#F5F5F5;">PakGet Engine</span>
+        <span style="color:#666666;">•</span>
+        <span style="color:#3B82F6;">100% Stateless & Free</span>
+    </div>
+    <h1 class="hero-h1">
         Free video downloader in Pakistan.<br>
-        <span class="hero-title-highlight">Paste a link. Done.</span>
-    </div>
-    <div class="hero-subtitle">
+        <span class="hero-elevated-badge">
+            <span class="hero-gradient-text">Paste a link. Done.</span>
+        </span>
+    </h1>
+    <p class="hero-p">
         Download supported public videos from YouTube, Instagram Reels, TikTok, Facebook, and X. Fast, free, and no account required.
-    </div>
-    <div class="platforms-bar">
-        <span class="platform-pill">🎬 YouTube</span>
-        <span class="platform-pill">📸 Instagram</span>
-        <span class="platform-pill">🎵 TikTok</span>
-        <span class="platform-pill">📘 Facebook</span>
-        <span class="platform-pill">🐦 Twitter / X</span>
+    </p>
+    <div class="platforms-wrap">
+        <span class="platform-item"><span style="color:#FF0000; font-size:1rem;">▶</span> YouTube</span>
+        <span class="platform-item"><span style="color:#E1306C; font-size:1rem;">●</span> Instagram</span>
+        <span class="platform-item"><span style="color:#FFFFFF; font-size:1rem;">♪</span> TikTok</span>
+        <span class="platform-item"><span style="color:#1877F2; font-size:1rem;">f</span> Facebook</span>
+        <span class="platform-item"><span style="color:#1DA1F2; font-size:1rem;">𝕏</span> Twitter / X</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -326,15 +512,15 @@ st.markdown("""
 # URL Input
 url_input = st.text_input(
     label="Video URL",
-    placeholder="Paste video link here (e.g., https://www.youtube.com/watch?v=...)",
+    placeholder="Paste video link here (e.g., https://www.instagram.com/reel/... or https://youtu.be/...)",
     label_visibility="collapsed"
 )
 
 col1, col2 = st.columns([3, 1])
 with col1:
-    fetch_btn = st.button("⚡ Fetch Video Details", width="stretch")
+    fetch_btn = st.button("Fetch Video Details", width="stretch")
 with col2:
-    if st.button("🧹 Clear", width="stretch"):
+    if st.button("Clear", width="stretch"):
         st.session_state.clear()
         st.rerun()
 
@@ -423,13 +609,13 @@ if info:
     if view_count:
         meta_html += f" &nbsp;•&nbsp; <b>Views:</b> {view_count}"
 
-    # Self-contained clean card layout (prevents broken image and DOM glitches)
-    img_html = f'<img src="{thumbnail_url}" style="width: 100%; border-radius: 12px; max-height: 400px; object-fit: cover; margin-bottom: 0.85rem;" alt="{title}" />' if thumbnail_url else ''
+    # Self-contained clean card layout matching official website liquid glass design
+    img_html = f'<img src="{thumbnail_url}" style="width: 100%; border-radius: 14px; max-height: 420px; object-fit: cover; margin-bottom: 0.85rem;" alt="{title}" />' if thumbnail_url else ''
     card_html = f'''
-    <div class="video-card">
+    <div class="official-video-card">
         {img_html}
-        <div class="video-title">{title}</div>
-        <div class="meta-row">{meta_html}</div>
+        <div class="card-title">{title}</div>
+        <div class="card-meta">{meta_html}</div>
     </div>
     '''
     st.markdown(card_html, unsafe_allow_html=True)
@@ -554,8 +740,69 @@ if info:
                 else:
                     st.error(f"⚠️ Download error: {err_text}")
 
-# FAQ
-with st.expander("❓ Frequently Asked Questions"):
+# How It Works & Supported Platforms (Matching Official Next.js Website)
+st.markdown("""
+<div style="margin-top: 3.5rem; margin-bottom: 2rem;">
+    <div style="text-align: left; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.4rem; font-weight: 700; color: #F5F5F5; margin-bottom: 0.25rem;">How It Works</h2>
+        <p style="font-size: 0.85rem; color: #A3A3A3; margin: 0;">Stateless, fast, and secure media downloads in three simple steps.</p>
+    </div>
+    <div class="grid-wrap">
+        <div class="feature-card">
+            <span class="feature-num">01</span>
+            <div class="feature-title">Paste video link</div>
+            <div class="feature-desc">Copy the URL from YouTube, Instagram Reels, TikTok, Facebook, or Twitter/X and paste it into the field.</div>
+        </div>
+        <div class="feature-card">
+            <span class="feature-num">02</span>
+            <div class="feature-title">Choose format</div>
+            <div class="feature-desc">Select your preferred video resolution (1080p HD, 720p, 480p) or switch to audio-only MP3 format.</div>
+        </div>
+        <div class="feature-card">
+            <span class="feature-num">03</span>
+            <div class="feature-title">Download instantly</div>
+            <div class="feature-desc">Save the media file directly to your device storage or phone gallery with zero ads or registration.</div>
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 3rem; margin-bottom: 2.5rem;">
+    <div style="text-align: left; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.4rem; font-weight: 700; color: #F5F5F5; margin-bottom: 0.25rem;">Supported Platforms</h2>
+        <p style="font-size: 0.85rem; color: #A3A3A3; margin: 0;">Optimized download engines tailored for all major social networks.</p>
+    </div>
+    <div class="grid-wrap">
+        <div class="feature-card">
+            <div style="font-size: 1.25rem; color: #FF0000; margin-bottom: 0.25rem;">▶</div>
+            <div class="feature-title">YouTube</div>
+            <div class="feature-desc">Videos, Shorts, and Audio extraction up to 1080p Full HD.</div>
+        </div>
+        <div class="feature-card">
+            <div style="font-size: 1.25rem; color: #E1306C; margin-bottom: 0.25rem;">●</div>
+            <div class="feature-title">Instagram</div>
+            <div class="feature-desc">Reels, Video Posts, and Carousel videos in original high quality.</div>
+        </div>
+        <div class="feature-card">
+            <div style="font-size: 1.25rem; color: #FFFFFF; margin-bottom: 0.25rem;">♪</div>
+            <div class="feature-title">TikTok</div>
+            <div class="feature-desc">Fast video downloads directly without watermarks.</div>
+        </div>
+        <div class="feature-card">
+            <div style="font-size: 1.25rem; color: #1877F2; margin-bottom: 0.25rem;">f</div>
+            <div class="feature-title">Facebook</div>
+            <div class="feature-desc">Public watch videos, reels, and clips in SD & HD MP4.</div>
+        </div>
+        <div class="feature-card">
+            <div style="font-size: 1.25rem; color: #1DA1F2; margin-bottom: 0.25rem;">𝕏</div>
+            <div class="feature-title">Twitter / X</div>
+            <div class="feature-desc">Video posts and animated GIFs saved directly to your device.</div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# FAQ Accordion
+with st.expander("Frequently Asked Questions"):
     st.markdown("""
     **Is this downloader free?**  
     Yes, 100% free with no limits, no registration, and no ads.
@@ -563,16 +810,25 @@ with st.expander("❓ Frequently Asked Questions"):
     **Which platforms are supported?**  
     Instagram Reels & Posts, TikTok, Facebook Videos, Twitter / X, and YouTube.
     
-    **Why does YouTube show 403 on cloud hosts?**  
-    YouTube detects and blocks automated media streaming from public cloud datacenter IP ranges (AWS, Google Cloud, Streamlit). Instagram, TikTok, Facebook, and X do not restrict cloud servers.
+    **Why does YouTube restrict cloud servers?**  
+    YouTube flags automated media streaming requests from public cloud datacenter IP ranges (AWS / Streamlit Cloud). Instagram, TikTok, Facebook, and X do not restrict cloud servers.
     
     **Can I download private videos?**  
     No. Only public media can be downloaded according to platform policies.
     """)
 
-# Footer
+# Official Footer Matching Footer.tsx
 st.markdown("""
-<div style="text-align: center; color: #64748b; font-size: 0.8rem; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #1e293b;">
-    PakGet Streamlit Edition • Powered by <b>yt-dlp</b> & <b>FFmpeg</b> • 100% Free & Open Source
+<div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.08); text-align: center;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+        <span class="brand-text-pak">Pak</span>
+        <span class="brand-badge-get">Get</span>
+    </div>
+    <p style="color: #666666; font-size: 0.8rem; max-width: 480px; margin: 0 auto 1.25rem; line-height: 1.5;">
+        A high-performance, stateless progressive web app for downloading social media in HD without accounts or tracking.
+    </p>
+    <div style="color: #444444; font-size: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+        © 2026 <b>PakGet</b>. All rights reserved. Purely for personal, non-commercial use. Not affiliated with YouTube, Meta, ByteDance, or X.
+    </div>
 </div>
 """, unsafe_allow_html=True)
