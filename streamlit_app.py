@@ -240,6 +240,16 @@ def get_cookies_path():
             pass
     return fetch_guest_cookies()
 
+def get_proxy():
+    try:
+        if "PROXY" in st.secrets:
+            return st.secrets["PROXY"]
+        if "HTTP_PROXY" in st.secrets:
+            return st.secrets["HTTP_PROXY"]
+    except Exception:
+        pass
+    return os.environ.get("HTTP_PROXY") or os.environ.get("HTTPS_PROXY")
+
 def clean_url(raw_url: str) -> str:
     if not raw_url:
         return ""
@@ -348,6 +358,10 @@ if fetch_btn and url_input.strip():
     cookies = get_cookies_path()
     if cookies:
         ydl_opts['cookiefile'] = cookies
+
+    proxy = get_proxy()
+    if proxy:
+        ydl_opts['proxy'] = proxy
 
     if "youtube.com" in target_url or "youtu.be" in target_url:
         ydl_opts['extractor_args'] = {
@@ -466,6 +480,10 @@ if info:
                     cookies = get_cookies_path()
                     if cookies:
                         dl_opts['cookiefile'] = cookies
+
+                    proxy = get_proxy()
+                    if proxy:
+                        dl_opts['proxy'] = proxy
 
                     if is_audio:
                         dl_opts['format'] = 'bestaudio/best'
