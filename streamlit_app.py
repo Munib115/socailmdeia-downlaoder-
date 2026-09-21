@@ -323,8 +323,7 @@ if fetch_btn and url_input.strip():
     if "youtube.com" in target_url or "youtu.be" in target_url:
         ydl_opts['extractor_args'] = {
             'youtube': {
-                'player_client': ['android', 'ios'],
-                'player_skip': ['webpage', 'configs']
+                'player_client': ['web_safari', 'visionos', 'mweb'],
             }
         }
 
@@ -334,14 +333,30 @@ if fetch_btn and url_input.strip():
                 info = ydl.extract_info(target_url, download=False)
                 st.session_state.video_info = info
         except Exception as e:
-            st.session_state.video_info = None
             err_msg = str(e)
-            if "Private video" in err_msg or "login" in err_msg:
-                st.error("🔒 This video is private. Only public media can be downloaded.")
-            elif "not available in your country" in err_msg or "Geo-restricted" in err_msg:
-                st.error("🌍 This video is geo-restricted.")
-            else:
-                st.error(f"⚠️ Could not fetch video: {err_msg[:160]}")
+            # Automatic fallback to visionos/tv if bot challenge encountered
+            if "bot" in err_msg.lower() or "sign in" in err_msg.lower():
+                try:
+                    ydl_opts['extractor_args'] = {
+                        'youtube': {'player_client': ['visionos', 'tv']}
+                    }
+                    with yt_dlp.YoutubeDL(ydl_opts) as retry_ydl:
+                        info = retry_ydl.extract_info(target_url, download=False)
+                        st.session_state.video_info = info
+                        err_msg = ""
+                except Exception as retry_err:
+                    err_msg = str(retry_err)
+
+            if err_msg:
+                st.session_state.video_info = None
+                if "Private video" in err_msg or "login" in err_msg:
+                    st.error("🔒 This video is private. Only public media can be downloaded.")
+                elif "not available in your country" in err_msg or "Geo-restricted" in err_msg:
+                    st.error("🌍 This video is geo-restricted.")
+                elif "bot" in err_msg.lower() or "sign in" in err_msg.lower():
+                    st.error("🤖 YouTube Cloud Bot Detection: YouTube detected a cloud datacenter IP. Please see the 'Cookie Authentication' guide below to bypass this.")
+                else:
+                    st.error(f"⚠️ Could not fetch video: {err_msg[:160]}")
 
 # Display Video Preview and Download
 info = st.session_state.video_info
@@ -410,8 +425,7 @@ if info:
                     if "youtube.com" in st.session_state.target_url or "youtu.be" in st.session_state.target_url:
                         dl_opts['extractor_args'] = {
                             'youtube': {
-                                'player_client': ['android', 'ios'],
-                                'player_skip': ['webpage', 'configs'],
+                                'player_client': ['web_safari', 'visionos', 'mweb'],
                             }
                         }
 
@@ -443,6 +457,7 @@ if info:
                                 dl_opts['format'] = 'bestvideo[height<=360]+bestaudio/best[height<=360]/best'
                             dl_opts['merge_output_format'] = 'mp4'
                         else:
+                            # Fallback when ffmpeg is missing: single stream pre-muxed mp4
                             dl_opts['format'] = 'best[ext=mp4]/best'
 
                     try:
@@ -450,12 +465,12 @@ if info:
                             ydl.download([st.session_state.target_url])
                     except Exception as dl_err:
                         err_str = str(dl_err)
-                        if "403" in err_str or "Forbidden" in err_str:
-                            st.warning("🔄 Bypassing stream protection... retrying download...")
+                        if "403" in err_str or "forbidden" in err_str.lower() or "bot" in err_str.lower() or "sign in" in err_str.lower():
+                            st.warning("🔄 Bypassing stream protection with visionos... retrying...")
                             dl_opts['extractor_args'] = {
-                                'youtube': {'player_client': ['ios', 'android']}
+                                'youtube': {'player_client': ['visionos', 'tv']}
                             }
-                            dl_opts['format'] = '18/22/best[ext=mp4]/best'
+                            dl_opts['format'] = 'best[ext=mp4]/best'
                             with yt_dlp.YoutubeDL(dl_opts) as fallback_ydl:
                                 fallback_ydl.download([st.session_state.target_url])
                         else:
@@ -487,10 +502,26 @@ with st.expander("❓ Frequently Asked Questions"):
     Yes, 100% free with no limits, no registration, and no ads.
     
     **Why does it say ffmpeg is needed?**  
-    YouTube stores 1080p and 720p video and audio tracks separately. FFmpeg automatically merges them into a single MP4 file. We have added `packages.txt` with `ffmpeg` so Streamlit Cloud installs it automatically.
+    YouTube stores 1080p and 720p video and audio tracks separately. FFmpeg automatically merges them into a single MP4 file.
     
     **Can I download private videos?**  
     No. Only public media can be downloaded according to platform policies.
+    """)
+
+# Cookie authentication for permanent cloud bot bypass
+with st.expander("🍪 YouTube Cookie Authentication (Permanent Cloud Bot Bypass)"):
+    st.markdown("""
+    YouTube occasionally challenges cloud hosting IP addresses (AWS, Streamlit Cloud). To guarantee 100% uninterrupted downloads:
+    1. Install the free Chrome extension **Get cookies.txt locally**.
+    2. Visit [youtube.com](https://youtube.com) and click **Export**.
+    3. In your Streamlit Cloud dashboard &rarr; App **Settings** &rarr; **Secrets**, paste:
+    ```toml
+    YOUTUBE_COOKIES = \"\"\"
+    # Netscape HTTP Cookie File
+    # Paste your exported cookies here
+    \"\"\"
+    ```
+    4. Save! Your app will authenticate with YouTube directly as a real browser user.
     """)
 
 # Footer
